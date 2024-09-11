@@ -7,6 +7,10 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from collision_statistics import compute_time_to_collision
 
+# get path from environment variable
+import os
+path = os.environ.get("LIMSIM_DIR")
+DIRPREFIX = f"{path}"
 
 def plot_ttc_version_1(ttc_statistics) -> None:
     plt.figure(figsize=(40, 4))
@@ -264,7 +268,8 @@ def plot_ttc_version_4(ttc_statistics):
 
 
 def main():
-    ttc_statistics = compute_time_to_collision("../egoTrackingTest.db")
+    print(f"{DIRPREFIX}/database/egoTrackingTest.db")
+    ttc_statistics = compute_time_to_collision(f"{DIRPREFIX}/database/egoTrackingTest.db")
     plot_ttc_version_4(ttc_statistics)
 
 

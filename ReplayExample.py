@@ -1,9 +1,12 @@
 from rich import print
 
 from simModel.egoTracking.replay import ReplayModel
+# get path from environment variable
+import os
+path = os.environ.get("LIMSIM_DIR")
+DIRPREFIX = f"{path}"
 
-
-dataBase = 'egoTrackingTest.db'
+dataBase = f'{DIRPREFIX}/database/egoTrackingTest.db'
 
 rmodel = ReplayModel(dataBase=dataBase,
                      startFrame=0)

@@ -4,7 +4,21 @@ import argparse
 import numpy as np
 from rich import print
 from matplotlib import pyplot as plt
+# get path from environment variable
+import os
+path = os.environ.get("LIMSIM_DIR")
+DIRPREFIX = f"{path}"
 plt.style.use('ggplot')
+
+def create_if_not_exist(path: str):
+    # Ensure the parent directory exists
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    
+    # Create the file if it doesn't exist
+    open(path, 'a').close()
+    
+    return path
+
 
 class Analysis:
     def __init__(self, database: str, outputPath: str, criteria: float) -> None:
@@ -51,7 +65,8 @@ class Analysis:
         plt.xlabel('Frame')
         plt.ylabel('TTC (s)')
         plt.ylim((0, 21))
-        plt.savefig(self.figPath + 'collision.svg', bbox_inches='tight')
+        collisionPath = create_if_not_exist(f"{self.figPath}/collision.svg")
+        plt.savefig(collisionPath, bbox_inches='tight')
         plt.close()
 
         header = '# Collision reports\n\n'
@@ -78,7 +93,8 @@ class Analysis:
         plt.hist(velocity, bins=100, density=True, color='#54a0ff')
         plt.xlabel('Velocity (m/s)')
         plt.ylabel('Density')
-        plt.savefig(self.figPath + 'velocityDistribution.svg', bbox_inches='tight')
+        figPath = create_if_not_exist(f"{self.figPath}/velocityDistribution.svg")
+        plt.savefig(figPath, bbox_inches='tight')
         plt.close()
 
         header = '# Velocity distribution reports\n\n'
@@ -100,10 +116,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Database report tool'
     )
-    parser.add_argument('database', type=str, help='Filename of the database.')
+    parser.add_argument('-d', '--database', type=str, help='Filename of the database.',
+                        default=f'{DIRPREFIX}/database/egoTrackingTest.db')
     parser.add_argument(
         '-o', '--output', type=str, help='path to generate the report.',
-        default='report/'
+        default=f'{DIRPREFIX}/report/'
         )
     parser.add_argument(
         '--ttc-criteria', type=float, 
@@ -118,7 +135,8 @@ if __name__ == '__main__':
     ana = Analysis(args.database, outputPath, args.ttc_criteria)
 
     # write the analysis comments of each section.
-    with open(os.path.join(outputPath, 'report.md'), 'w') as rf:
+    outputPath = create_if_not_exist(f"{outputPath}/report.md")
+    with open(outputPath, 'w') as rf:
         collsionComments = ana.collisionAnalysis()
         rf.write(collsionComments)
         velocityDistributionComments = ana.velocityDistributionAnalysis()

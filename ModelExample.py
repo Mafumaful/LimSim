@@ -3,43 +3,48 @@ from trafficManager.traffic_manager import TrafficManager
 
 import logger
 
-log = logger.setup_app_level_logger(file_name="app_debug.log")
+# get path from environment variable
+import os
+path = os.environ.get("LIMSIM_DIR")
+DIRPREFIX = f"{path}"
+
+log = logger.setup_app_level_logger(file_name=f"{DIRPREFIX}/database/app_debug.log")
 
 
 file_paths = {
     "corridor": (
-        "networkFiles/corridor/corridor.net.xml",
-        "networkFiles/corridor/corridor.rou.xml",
+        f"{DIRPREFIX}/networkFiles/corridor/corridor.net.xml",
+        f"{DIRPREFIX}/networkFiles/corridor/corridor.rou.xml",
     ),
     "CarlaTown01": (
-        "networkFiles/CarlaTown01/Town01.net.xml",
-        "networkFiles/CarlaTown01/carlavtypes.rou.xml,networkFiles/CarlaTown01/Town01.rou.xml",
+        f"{DIRPREFIX}/networkFiles/CarlaTown01/Town01.net.xml",
+        f"{DIRPREFIX}/networkFiles/CarlaTown01/carlavtypes.rou.xml,{DIRPREFIX}/networkFiles/CarlaTown01/Town01.rou.xml",
     ),
     "CarlaTown05": (
-        "networkFiles/CarlaTown05/Town05.net.xml",
-        "networkFiles/CarlaTown05/carlavtypes.rou.xml,networkFiles/CarlaTown05/Town05.rou.xml",
+        f"{DIRPREFIX}/networkFiles/CarlaTown05/Town05.net.xml",
+        f"{DIRPREFIX}/networkFiles/CarlaTown05/carlavtypes.rou.xml,{DIRPREFIX}/networkFiles/CarlaTown05/Town05.rou.xml",
     ),
     "bigInter": (
-        "networkFiles/bigInter/bigInter.net.xml",
-        "networkFiles/bigInter/bigInter.rou.xml",
+        f"{DIRPREFIX}/networkFiles/bigInter/bigInter.net.xml",
+        f"{DIRPREFIX}/networkFiles/bigInter/bigInter.rou.xml",
     ),
     "roundabout": (
-        "networkFiles/roundabout/roundabout.net.xml",
-        "networkFiles/roundabout/roundabout.rou.xml",
+        f"{DIRPREFIX}/networkFiles/roundabout/roundabout.net.xml",
+        f"{DIRPREFIX}/networkFiles/roundabout/roundabout.rou.xml",
     ),
     "bilbao":   (
-        "networkFiles/bilbao/osm.net.xml",
-        "networkFiles/bilbao/osm.rou.xml",
+        f"{DIRPREFIX}/networkFiles/bilbao/osm.net.xml",
+        f"{DIRPREFIX}/networkFiles/bilbao/osm.rou.xml",
     ),
     #######
-    # Please make sure you have request the access from https://github.com/ozheng1993/UCF-SST-CitySim-Dataset and put the road network files (.net.xml) in the relevent networkFiles/CitySim folder
+    # Please make sure you have request the access from https://github.com/ozheng1993/UCF-SST-CitySim-Dataset and put the road network files (.net.xml) in the relevent {DIRPREFIX}/networkFiles/CitySim folder
     "freewayB": (
-        "networkFiles/CitySim/freewayB/freewayB.net.xml",
-        "networkFiles/CitySim/freewayB/freewayB.rou.xml",
+        f"{DIRPREFIX}/networkFiles/CitySim/freewayB/freewayB.net.xml",
+        f"{DIRPREFIX}/networkFiles/CitySim/freewayB/freewayB.rou.xml",
     ),
     "Expressway_A": (
-        "networkFiles/CitySim/Expressway_A/Expressway_A.net.xml",
-        "networkFiles/CitySim/Expressway_A/Expressway_A.rou.xml",
+        f"{DIRPREFIX}/networkFiles/CitySim/Expressway_A/Expressway_A.net.xml",
+        f"{DIRPREFIX}/networkFiles/CitySim/Expressway_A/Expressway_A.rou.xml",
     ),
     ########
 }
@@ -49,7 +54,7 @@ def run_model(
     net_file,
     rou_file,
     ego_veh_id="61",
-    data_base="egoTrackingTest.db",
+    data_base=f"{DIRPREFIX}/database/egoTrackingTest.db",
     SUMOGUI=0,
     sim_note="example simulation, LimSim-v-0.2.0.",
     carla_cosim=False,

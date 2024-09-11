@@ -2,15 +2,20 @@ from simModel.fixedScene.model import Model
 from trafficManager.traffic_manager import TrafficManager
 
 import logger
+# get path from environment variable
+import os
+path = os.environ.get("LIMSIM_DIR")
+DIRPREFIX = f"{path}"
+
 # config a logger, set use_stdout=True to output log to terminal
-log = logger.setup_app_level_logger(file_name="app_debug.log",
+log = logger.setup_app_level_logger(file_name=f"{DIRPREFIX}/database/app_debug.log",
                                     level="DEBUG",
                                     use_stdout=False)
 
 
-carlaNetFile = 'networkFiles/CarlaTown05/Town05.net.xml'
-carlaRouFile = 'networkFiles/CarlaTown05/Town05.rou.xml'
-carlaVtypeFile = 'networkFiles/CarlaTown05/carlavtypes.rou.xml'
+carlaNetFile = f'{DIRPREFIX}/networkFiles/CarlaTown05/Town05.net.xml'
+carlaRouFile = f'{DIRPREFIX}/networkFiles/CarlaTown05/Town05.rou.xml'
+carlaVtypeFile = f'{DIRPREFIX}/networkFiles/CarlaTown05/carlavtypes.rou.xml'
 carlaRouFile = carlaVtypeFile + ',' + carlaRouFile
 
 if __name__ == '__main__':
@@ -19,7 +24,7 @@ if __name__ == '__main__':
         50,
         carlaNetFile,
         carlaRouFile,
-        dataBase='fixedSceneTest.db',
+        dataBase=f'{DIRPREFIX}/database/fixedSceneTest.db',
         SUMOGUI=0,
         simNote='local model first testing.',
     )

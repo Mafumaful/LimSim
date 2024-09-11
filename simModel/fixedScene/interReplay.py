@@ -15,6 +15,9 @@ from simModel.fixedScene.localScene import LocalSceneReplay
 from utils.trajectory import Trajectory, State, Rectangle, RecCollide
 from utils.simBase import vehType
 
+import os
+path = os.environ.get("LIMSIM_DIR")
+DIRPREFIX = f"{path}"
 
 class InterReplayModel:
     def __init__(self,
@@ -76,7 +79,7 @@ class InterReplayModel:
         if dataBase2:
             self.dataBase2 = dataBase2
         else:
-            self.dataBase2 = datetime.strftime(
+            self.dataBase2 = f"{DIRPREFIX}/database/" + datetime.strftime(
                 datetime.now(), '%Y-%m-%d_%H-%M-%S') + '_egoTracking_ir' + '.db'
             
         self.createDatabase2()
