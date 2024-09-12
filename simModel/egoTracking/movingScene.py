@@ -22,7 +22,7 @@ class MovingScene:
         self.vehINAoI: dict[str, Vehicle] = {}
         self.outOfAoI: dict[str, Vehicle] = {}
 
-    # if lane-lenght <= the self.ego's deArea, return current edge, current
+    # if lane-length <= the self.ego's deArea, return current edge, current
     # edge's upstream intersection and current edge's downstream intersection.
     # else, judge if the upstream intersection or downstream intersection
     # is in the range of the vehicle's deArea.
