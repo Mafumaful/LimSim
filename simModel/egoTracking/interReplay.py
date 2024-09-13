@@ -18,7 +18,9 @@ from utils.simBase import vehType, MapCoordTF
 from evaluation.evaluation import RealTimeEvaluation
 from typing import List
 from math import sin, cos, pi
-
+# get path from environment variable
+path = os.environ.get("LIMSIM_DIR")
+DIRPREFIX = f"{path}"
 
 class InterReplayModel:
     def __init__(self,
@@ -85,7 +87,7 @@ class InterReplayModel:
         if dataBase2:
             self.dataBase2 = dataBase2
         else:
-            self.dataBase2 = datetime.strftime(
+            self.dataBase2 = f"{DIRPREFIX}/database/" + datetime.strftime(
                 datetime.now(), '%Y-%m-%d_%H-%M-%S') + '_egoTracking_ir' + '.db'
 
         self.createDatabase2()

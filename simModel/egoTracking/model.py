@@ -24,6 +24,10 @@ from utils.simBase import MapCoordTF, vehType
 
 from evaluation.evaluation import RealTimeEvaluation
 
+# get path from environment variable
+import os
+path = os.environ.get("LIMSIM_DIR")
+DIRPREFIX = f"{path}"
 
 class Model:
     '''
@@ -73,7 +77,7 @@ class Model:
         if dataBase:
             self.dataBase = dataBase
         else:
-            self.dataBase = datetime.strftime(
+            self.dataBase = f"{DIRPREFIX}/database/" + datetime.strftime(
                 datetime.now(), '%Y-%m-%d_%H-%M-%S') + '_egoTracking' + '.db'
 
         self.createDatabase()
