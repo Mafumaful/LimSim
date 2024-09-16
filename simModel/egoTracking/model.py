@@ -432,6 +432,11 @@ class Model:
                       color=(249, 202, 36),
                       size=20,
                       parent=infoNode)
+        dpg.draw_text((5, 85),
+                      'Cost: %.5f' % self.ego.plannedTrajectory.cost if self.ego.plannedTrajectory else 0,
+                      color=(249, 202, 36),
+                      size=20,
+                      parent=infoNode)
 
         radarNode = dpg.add_draw_node(parent='radarPlot')
 
