@@ -20,6 +20,7 @@ class mAttacker(AbstractEgoPlanner):
     def init(self):
         self.count = 0
         self.attack_location = 100
+        self.current_state = "ATK_ON_HARDBRAKE"
         
     def attack(self, 
                attack_type: AttackType = AttackType.DOS):
@@ -32,7 +33,7 @@ class mAttacker(AbstractEgoPlanner):
              prediction: Prediction,
              T,
              config,
-             ego_decision: MultiDecision = None) -> Trajectory:
+             attack_type: str="ATK_ON_HARDBRAKE") -> Trajectory:
 
         vehicle_id = ego_veh.id
         start = time.time()
@@ -81,40 +82,28 @@ class mAttacker(AbstractEgoPlanner):
 
         if self.count == 0:
             self.attack_location = ego_veh.current_state.s
+            self.current_state = attack_type
         self.count += 1
         
-        if ego_veh.behaviour == Behaviour.KL:
+        if self.current_state == "ATK_ON_HARDBRAKE":
             path = traj_generator.stop_trajectory_generator_atk(
                 ego_veh, lanes, obs_list, roadgraph, config, T, self.attack_location
             )
-        elif ego_veh.behaviour == Behaviour.STOP:
-            # Stopping
-            path = traj_generator.stop_trajectory_generator_atk(
-                ego_veh, lanes, obs_list, roadgraph, config, T, self.attack_location
-            )
-        elif ego_veh.behaviour == Behaviour.LCL:
-            path = traj_generator.stop_trajectory_generator_atk(
-                ego_veh, lanes, obs_list, roadgraph, config, T, self.attack_location
-            )
-        elif ego_veh.behaviour == Behaviour.LCR:
-            path = traj_generator.stop_trajectory_generator_atk(
-                ego_veh, lanes, obs_list, roadgraph, config, T, self.attack_location
-            )
-        elif ego_veh.behaviour == Behaviour.IN_JUNCTION:
-            # in Junction. for now just stop trajectory
-            path = traj_generator.stop_trajectory_generator_atk(
-                ego_veh, lanes, obs_list, roadgraph, config, T, self.attack_location
+        elif self.current_state == "ATK_ON_FULLTHROTTLE":
+            path = traj_generator.lanekeeping_trajectory_generator_atk(
+                ego_veh, lanes, obs_list, config, T
             )
         else:
             logging.error(
                 "Vehicle {} has unknown behaviour {}".format(
                     ego_veh.id, ego_veh.behaviour)
             )
+            print(f"{attack_type} is not supported")
+    
         logging.debug(
             "Vehicle {} Total planning time: {}".format(
                 ego_veh.id, time.time() - start)
         )
         
-        logging.debug(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> attack implemented! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
         return path

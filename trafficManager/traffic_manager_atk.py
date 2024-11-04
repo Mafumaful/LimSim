@@ -99,8 +99,10 @@ class TrafficManager:
                     'd'):
                 KEY_INPUT = 'Right'
             elif key == keyboard.KeyCode.from_char('q'):
-                KEY_INPUT = 'ATK_ON'
+                KEY_INPUT = 'ATK_ON_HARDBRAKE'
             elif key == keyboard.KeyCode.from_char('w'):
+                KEY_INPUT = 'ATK_ON_FULLTHROTTLE'
+            elif key == keyboard.KeyCode.from_char('z'):
                 KEY_INPUT = 'ATK_OFF'
 
         listener = keyboard.Listener(on_press=on_press)
@@ -169,12 +171,19 @@ class TrafficManager:
                                                    multi_decision=self.mul_decisions,
                                                    T=T, config=self.config)
 
-        if KEY_INPUT == "ATK_ON":
+        if KEY_INPUT == "ATK_ON_HARDBRAKE" and self.current_state == False:
             if self.current_state == False: # first time the attack is on
                 self.attacker.init()
             self.current_state = True
-            print(f"[red bold]attack is triggered on the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/red bold]")
-        elif KEY_INPUT == "ATK_OFF":
+            print(f"[red bold]attack <hard brake> is triggered on the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/red bold]")
+            
+        if KEY_INPUT == "ATK_ON_FULLTHROTTLE" and self.current_state == False:
+            if self.current_state == False: # first time the attack is on
+                self.attacker.init()
+            self.current_state = True
+            print(f"[red bold]attack <full throttle> is triggered on the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/red bold]")
+            
+        elif KEY_INPUT == "ATK_OFF" and self.current_state == True:
             print(f"[green bold]attack is triggered off the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/green bold]")
             self.current_state = False
 
@@ -187,7 +196,7 @@ class TrafficManager:
             else:
                 ego_path = self.attacker.plan(vehicles[ego_id], observation,
                                                 roadgraph, prediction, T,
-                                                self.config, ego_decision)
+                                                self.config, KEY_INPUT)
             
             result_paths[ego_id] = ego_path
 

@@ -656,6 +656,106 @@ def lanekeeping_trajectory_generator(vehicle: Vehicle,
     )
     return stop_path
 
+def lanekeeping_trajectory_generator_atk(vehicle: Vehicle,
+                                     lanes: List[AbstractLane], obs_list,
+                                     config, T) -> Trajectory:
+    road_width = lanes[0].width
+    current_state = vehicle.current_state
+    target_vel = vehicle.target_speed
+
+    # Step 1: Sample target states
+    d_road_w = config["D_ROAD_W"]
+    d_t_sample = config["D_T_S"] / 3.6
+    n_s_d_sample = config["N_D_S_SAMPLE"]
+    dt = config["DT"]
+
+    sample_d = np.linspace(-road_width / 3,
+                           road_width / 3,
+                           num=int(road_width / d_road_w) +
+                           1)  # sample target lateral offset
+    sample_d = sample_d[sample_d != 0]
+    center_d = [0]
+    sample_t = [config["MIN_T"]]  # Sample course time
+    # sample target longtitude vel(Velocity keeping)
+    # decelerate when traveling into next road segement
+    if current_state.vel * sample_t[0] > lanes[0].course_spline.s[
+            -1] - current_state.s:
+        speed_limit = 25 / 3.6
+        if len(lanes) > 1:
+            speed_limit = min(speed_limit, lanes[1].speed_limit)
+        sample_vel = np.linspace(min(current_state.vel, 10 / 3.6), speed_limit, 4)
+    else:
+        sample_vel = np.linspace(
+            max(1e-9, current_state.vel - d_t_sample * n_s_d_sample),
+            min(
+                max(current_state.vel, target_vel) +
+                d_t_sample * n_s_d_sample * 1.01, lanes[0].speed_limit),
+            5,
+        )
+
+    # Step 2: Generate Center line trajectories
+    center_paths = frenet_optimal_planner.calc_frenet_paths(
+        current_state, center_d, sample_t, sample_vel, dt, config)
+    best_path = None
+    best_cost = math.inf
+    if center_paths is not None:
+        for path in center_paths:
+            path.frenet_to_cartesian(lanes, current_state)
+            path.cost = (
+                cost.smoothness(path, lanes[0].course_spline, config["weights"])
+                * dt + cost.vel_diff(path, target_vel, config["weights"]) * dt +
+                cost.guidance(path, config["weights"]) * dt +
+                cost.acc(path, config["weights"]) * dt +
+                cost.jerk(path, config["weights"]) * dt)
+            if check_path(vehicle, path) and path.cost < best_cost:
+                best_cost = path.cost
+                best_path = path
+
+    if best_path is not None:
+        return best_path
+    
+    # Step 3: If no valid path, Generate nudge trajectories
+    paths = frenet_optimal_planner.calc_frenet_paths(current_state, sample_d,
+                                                     sample_t, sample_vel, dt,
+                                                     config)
+    best_cost = math.inf
+    if paths is not None:
+        for path in paths:
+            path.frenet_to_cartesian(lanes, current_state)
+            path.cost = (
+                cost.smoothness(path, lanes[0].course_spline, config["weights"])
+                * dt + cost.vel_diff(path, target_vel, config["weights"]) * dt +
+                cost.guidance(path, config["weights"]) * dt +
+                cost.acc(path, config["weights"]) * dt +
+                cost.jerk(path, config["weights"]) * dt +
+                cost.obs(vehicle, path, obs_list, config))
+            if check_path(vehicle, path) and path.cost < best_cost:
+                best_cost = path.cost
+                best_path = path
+
+    if best_path is not None:
+        logging.debug(
+            f"Vehicle {vehicle.id} finds a lanekeeping NUDGE path with minimum cost: {best_cost}"
+        )
+        return best_path
+
+    # Step 4: if no nudge path is found, Calculate a emergency stop path
+    logging.debug(
+        f"Vehicle {vehicle.id} No lane keeping path found, Calculate a emergency brake path.{vehicle.max_decel}"
+    )
+
+    stop_path = frenet_optimal_planner.calc_stop_path(current_state,
+                                                      vehicle.max_decel*1.5,
+                                                      sample_t[0], dt, config)
+    stop_path.frenet_to_cartesian(lanes, current_state)
+    stop_path.cost = (
+        cost.smoothness(stop_path, lanes[0].course_spline, config["weights"]) * dt
+        + cost.guidance(stop_path, config["weights"]) * dt
+        + cost.acc(stop_path, config["weights"]) * dt
+        + cost.jerk(stop_path, config["weights"]) * dt
+        + cost.stop(config["weights"])
+    )
+    return stop_path
 
 def decision_trajectory_generator(
     vehicle: Vehicle,
