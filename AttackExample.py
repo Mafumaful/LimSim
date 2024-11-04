@@ -1,4 +1,4 @@
-from simModel.egoTracking.model import Model
+from simModel.egoTracking.model_atk import Model
 from trafficManager.traffic_manager_atk import TrafficManager
 
 import logger
