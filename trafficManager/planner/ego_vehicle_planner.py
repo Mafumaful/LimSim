@@ -69,7 +69,26 @@ class EgoPlanner(AbstractEgoPlanner):
             current_lane.id, ego_veh.available_lanes)
         lanes = [current_lane, next_lane] if next_lane != None else [
             current_lane]
-
+        
+        # # print current behaviour
+        # if ego_veh.behaviour == Behaviour.KL:
+        #     print("KL")
+        # elif ego_veh.behaviour == Behaviour.STOP:
+        #     print("STOP")
+        # elif ego_veh.behaviour == Behaviour.LCL:
+        #     print("LCL")
+        # elif ego_veh.behaviour == Behaviour.LCR:
+        #     print("LCR")
+        # elif ego_veh.behaviour == Behaviour.IN_JUNCTION:
+        #     print("IN_JUNCTION")
+        
+        # if next_lane == None:
+        #     print("Next Lane: None")
+        # elif isinstance(next_lane, JunctionLane):
+        #     print("Next Lane: JunctionLane")
+        # elif isinstance(next_lane, NormalLane):
+        #     print("Next Lane: NormalLane")
+            
         if ego_veh.behaviour == Behaviour.KL:
             if isinstance(current_lane, NormalLane) and next_lane != None and isinstance(next_lane, JunctionLane) and (next_lane.currTlState == "R" or next_lane.currTlState == "r"):
                 # Stop

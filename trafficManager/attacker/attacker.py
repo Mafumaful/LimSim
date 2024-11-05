@@ -90,9 +90,55 @@ class mAttacker(AbstractEgoPlanner):
                 ego_veh, lanes, obs_list, roadgraph, config, T, self.attack_location
             )
         elif self.current_state == "ATK_ON_FULLTHROTTLE":
-            path = traj_generator.lanekeeping_trajectory_generator_atk(
-                ego_veh, lanes, obs_list, config, T
+            if ego_veh.behaviour == Behaviour.KL or ego_veh.behaviour == Behaviour.STOP:
+                # Keep Lane
+                if ego_veh.current_state.s_d >= 10 / 3.6:
+                    path = traj_generator.lanekeeping_trajectory_generator_atk(
+                        ego_veh, lanes, obs_list, config, T, "ATK_ON_FULLTHROTTLE"
+                    )
+                else:
+                    print("unexpected behaviour")
+                    path = traj_generator.stop_trajectory_generator(
+                        ego_veh, lanes, obs_list, roadgraph, config, T,
+                    )
+            elif ego_veh.behaviour == Behaviour.LCL:
+                # Turn Left
+                left_lane = roadgraph.get_lane_by_id(current_lane.left_lane())
+                path = traj_generator.lanechange_trajectory_generator_atk(
+                    ego_veh,
+                    left_lane,
+                    obs_list,
+                    config,
+                    T,
+                    "ATK_ON_FULLTHROTTLE"
+                )
+            elif ego_veh.behaviour == Behaviour.LCR:
+                # Turn Right
+                right_lane = roadgraph.get_lane_by_id(
+                    current_lane.right_lane())
+                path = traj_generator.lanechange_trajectory_generator_atk(
+                    ego_veh,
+                    right_lane,
+                    obs_list,
+                    config,
+                    T,
+                    "ATK_ON_FULLTHROTTLE"
+                )
+            elif ego_veh.behaviour == Behaviour.IN_JUNCTION:
+                # in Junction. for now just stop trajectory
+                path = traj_generator.stop_trajectory_generator(
+                    ego_veh, lanes, obs_list, roadgraph, config, T,
+                )
+            else:
+                logging.error(
+                    "Vehicle {} has unknown behaviour {}".format(
+                        ego_veh.id, ego_veh.behaviour)
+                )
+            logging.debug(
+                "Vehicle {} Total planning time: {}".format(
+                    ego_veh.id, time.time() - start)
             )
+        
         else:
             logging.error(
                 "Vehicle {} has unknown behaviour {}".format(
