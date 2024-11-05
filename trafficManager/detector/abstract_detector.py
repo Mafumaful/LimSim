@@ -8,16 +8,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List
-
-from common.observation import Observation
-from common.vehicle import Vehicle
-
-from utils.roadgraph import RoadGraph
-from utils.trajectory import State
 
 class AbstractDetector(ABC):
     @abstractmethod
-    def detect(self, **kwargs) -> None:
+    def update_data(self, **kwargs) -> None:
         pass
 
