@@ -23,6 +23,7 @@ from utils.trajectory import State, Trajectory
 from utils.simBase import MapCoordTF, vehType
 
 from evaluation.evaluation import RealTimeEvaluation
+from trafficManager.detector.detector import mDetector
 
 # get path from environment variable
 import os
@@ -96,6 +97,7 @@ class Model:
         self.gui = GUI('real-time-ego')
 
         self.evaluation = RealTimeEvaluation(dt=0.1)
+        self.detection = mDetector(dt=0.1)
 
     def createDatabase(self):
         # if database exist then delete it
@@ -440,8 +442,9 @@ class Model:
 
         radarNode = dpg.add_draw_node(parent='radarPlot')
 
-        points = self.evaluation.output_result()
-        self.putEvaluationInfo(self.evaluation.result)
+        points = self.evaluation.output_result() # get the evaluation result for visualization
+        self.putEvaluationInfo(self.evaluation.result) # store it into database
+        self.detection.update_detection_data()
 
         transformed_points = self._evaluation_transform_coordinate(points,
                                                                    scale=30)
@@ -544,6 +547,7 @@ class Model:
             current_lane = self.nb.getJunctionLane(self.ego.laneID)
         agents = list(self.ms.vehINAoI.values())
         self.evaluation.update_data(self.ego, current_lane, agents)
+        self.detection.update_data(self.ego, current_lane, agents, self.roadgraph)
 
     def getSce(self):
         if self.ego.id in traci.vehicle.getIDList():
@@ -560,6 +564,7 @@ class Model:
                 for v in self.ms.currVehicles.values():
                     self.getVehInfo(v)
 
+            self.roadgraph, _ = self.ms.exportScene()
             self.update_evluation_data()
 
             self.drawScene()
