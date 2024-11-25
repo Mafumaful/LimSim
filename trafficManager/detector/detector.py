@@ -117,12 +117,6 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
-        if isinstance(self.current_lane, JunctionLane):
-            if self.current_lane.currTlState == 'r':
-                return 2.0
-            elif self.current_lane.currTlState == 'y':
-                return 1.0
-
         return 0.0
     
     def _calc_traffic_rule_cost(self) -> float:
@@ -134,12 +128,11 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
-        # print("calc_traffic_rule_cost")
-        # if isinstance(self.current_lane, NormalLane):
-        #     id = self.current_lane.id
-        #     next_lane = self.roadgraph.get_next_lane(id)
-        # else:
-        #     pass
+        if isinstance(self.current_lane, JunctionLane):
+            if self.current_lane.currTlState == 'r':
+                return 2.0
+            elif self.current_lane.currTlState == 'y':
+                return 1.0
                 
         return 0.0
     
