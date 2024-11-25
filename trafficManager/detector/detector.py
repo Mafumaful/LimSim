@@ -12,12 +12,21 @@ import numpy as np
 from typing import List
 from evaluation.math_utils import normalize
 from simModel.common.carFactory import Vehicle
+from rich import print
 
 from utils.roadgraph import AbstractLane, JunctionLane, NormalLane, RoadGraph
 from utils.obstacles import Rectangle
 
 # this is used for check collision
 from shapely.geometry import LineString
+
+def print_cost(cost: float = 0):
+    if cost == 0:
+        print(f"cost: [blue bold]{cost}[/blue bold]")
+    elif cost <= 1:
+        print(f"cost: [yellow bold]{cost}[/yellow bold]")
+    else:
+        print(f"cost: [red bold]{cost}[/red bold]")
 
 def ConstantV(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
     """
@@ -110,10 +119,8 @@ class mDetector(AbstractDetector):
         """
         if isinstance(self.current_lane, JunctionLane):
             if self.current_lane.currTlState == 'r':
-                print("red light")
                 return 2.0
             elif self.current_lane.currTlState == 'y':
-                print("yellow light")
                 return 1.0
 
         return 0.0
@@ -168,4 +175,5 @@ class mDetector(AbstractDetector):
         collision_possibility_cost = self._calc_collision_possibliity_cost()
 
         total_cost = path_cost + traffic_rule_cost + collision_possibility_cost
-        print(total_cost)
+        print_cost(total_cost)
+        
