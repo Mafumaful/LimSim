@@ -25,6 +25,8 @@ def print_cost(cost: float = 0):
         print(f"cost: [blue bold]{cost}[/blue bold]")
     elif cost <= 1:
         print(f"cost: [yellow bold]{cost}[/yellow bold]")
+    elif cost <= 2:
+        print(f"cost: [orange bold]{cost}[/orange bold]")
     else:
         print(f"cost: [red bold]{cost}[/red bold]")
 
