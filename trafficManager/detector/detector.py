@@ -19,9 +19,9 @@ from utils.obstacles import Rectangle
 # this is used for check collision
 from shapely.geometry import LineString
 
-def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
+def ConstantV(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
     """
-    Generate a constant velocity trajectory and constant turning rate trajectory.
+    Generate a constant velocity trajectory.
 
     Args:
         veh (Vehicle): The target vehicle.
@@ -40,12 +40,44 @@ def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -
     traj.append((last_x, last_y))
 
     for i in range(1, predict_step):
-        x = last_x + last_v * np.cos(last_yaw) * dt * i
-        y = last_y + last_v * np.sin(last_yaw) * dt * i
-        traj.append((x, y))
+        last_x += last_v * np.cos(last_yaw) * dt 
+        last_y += last_v * np.sin(last_yaw) * dt 
+        traj.append((last_x, last_y))
 
     return traj
 
+def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
+    """
+    Generate a constant velocity trajectory and constant turning rate trajectory.
+
+    Args:
+        veh (Vehicle): The target vehicle.
+        dt (float, optional): The time interval. Defaults to 0.1.
+
+    Returns:
+        list: The generated trajectory [(x,y), (x,y) ... ].
+    """
+    
+    traj = []
+
+    last_v = veh.speedQ[-1]
+    last_yaw = veh.yawQ[-1]
+    last_x = veh.xQ[-1]
+    last_y = veh.yQ[-1]
+    turning_rate = 0
+    if len(veh.yawQ) > 3:
+        yaw_diff = ((veh.yawQ[-1] - veh.yawQ[-2]) + (veh.yawQ[-2] - veh.yawQ[-3]))/2
+        turning_rate = yaw_diff / dt
+
+    traj.append((last_x, last_y))
+
+    for i in range(1, predict_step):
+        last_x += last_v * np.cos(last_yaw) * dt 
+        last_y += last_v * np.sin(last_yaw) * dt 
+        last_yaw += turning_rate * dt
+        traj.append((last_x, last_y))
+
+    return traj
 
 class mDetector(AbstractDetector):
     def __init__(self, dt: float = 0.1) -> None:
@@ -76,12 +108,13 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
-        if self.agents:
-            pass
-
-            
-        else: 
-            number_of_agents = 0
+        if isinstance(self.current_lane, JunctionLane):
+            if self.current_lane.currTlState == 'r':
+                print("red light")
+                return 2.0
+            elif self.current_lane.currTlState == 'y':
+                print("yellow light")
+                return 1.0
 
         return 0.0
     
@@ -113,8 +146,11 @@ class mDetector(AbstractDetector):
             float: the cost of the path
         """
         if self.agents:
+            # ego_traj = ConstantV(self.ego, self.dt)
+            # trajs = [ConstantV(agent, self.dt) for agent in self.agents]
             ego_traj = ConstantVConstantT(self.ego, self.dt)
             trajs = [ConstantVConstantT(agent, self.dt) for agent in self.agents]
+            
             # check collision
             for traj in trajs:
                 if LineString(ego_traj).intersects(LineString(traj)):
