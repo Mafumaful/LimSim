@@ -26,9 +26,9 @@ def print_cost(cost: float = 0):
     elif cost <= 1:
         print(f"cost: [yellow bold]{cost}[/yellow bold]")
     elif cost <= 2:
-        print(f"cost: [orange bold]{cost}[/orange bold]")
+        print(f"cost: [orange1 bold]{cost}[/orange1 bold]")
     else:
-        print(f"cost: [red bold]{cost}[/red bold]")
+        print(f"cost: [red1 bold]{cost}[/red1 bold]")
 
 def ConstantV(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
     """
