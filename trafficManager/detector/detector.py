@@ -16,6 +16,37 @@ from simModel.common.carFactory import Vehicle
 from utils.roadgraph import AbstractLane, JunctionLane, NormalLane, RoadGraph
 from utils.obstacles import Rectangle
 
+# this is used for check collision
+from shapely.geometry import LineString
+
+def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
+    """
+    Generate a constant velocity trajectory and constant turning rate trajectory.
+
+    Args:
+        veh (Vehicle): The target vehicle.
+        dt (float, optional): The time interval. Defaults to 0.1.
+
+    Returns:
+        list: The generated trajectory [(x,y), (x,y) ... ].
+    """
+    
+    traj = []
+
+    last_v = veh.speedQ[-1]
+    last_yaw = veh.yawQ[-1]
+    last_x = veh.xQ[-1]
+    last_y = veh.yQ[-1]
+    traj.append((last_x, last_y))
+
+    for i in range(1, predict_step):
+        x = last_x + last_v * np.cos(last_yaw) * dt * i
+        y = last_y + last_v * np.sin(last_yaw) * dt * i
+        traj.append((x, y))
+
+    return traj
+
+
 class mDetector(AbstractDetector):
     def __init__(self, dt: float = 0.1) -> None:
         self.dt: float = dt
@@ -46,7 +77,9 @@ class mDetector(AbstractDetector):
             float: the cost of the path
         """
         if self.agents:
-            number_of_agents = len(self.agents)
+            pass
+
+            
         else: 
             number_of_agents = 0
 
@@ -61,13 +94,12 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
-        print("calc_traffic_rule_cost")
-        if isinstance(self.current_lane, NormalLane):
-            id = self.current_lane.id
-            next_lane = self.roadgraph.get_next_lane(id)
-            print(next_lane)
-        else:
-            print(self.current_lane)
+        # print("calc_traffic_rule_cost")
+        # if isinstance(self.current_lane, NormalLane):
+        #     id = self.current_lane.id
+        #     next_lane = self.roadgraph.get_next_lane(id)
+        # else:
+        #     pass
                 
         return 0.0
     
@@ -80,6 +112,18 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
+        if self.agents:
+            ego_traj = ConstantVConstantT(self.ego, self.dt)
+            trajs = [ConstantVConstantT(agent, self.dt) for agent in self.agents]
+            # check collision
+            for traj in trajs:
+                if LineString(ego_traj).intersects(LineString(traj)):
+                    return 1.0
+                else:
+                    return 0.0
+        else: 
+            return 0.0
+            
         return 0.0
 
     def update_detection_data(self):
