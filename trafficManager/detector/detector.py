@@ -119,6 +119,19 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
+        velocity_queue = self.ego.speedQ
+        acceleration_queue = self.ego.accelQ
+        
+        brake_threshold = 0.5
+        
+        if len(velocity_queue) > 3:
+            # check if the vehicle is braking
+            if velocity_queue[-1] < velocity_queue[-2] and velocity_queue[-2] < velocity_queue[-3]:
+                if acceleration_queue[-1] < -brake_threshold:
+                    return 1.0
+        else:
+            return 0.0
+        
         return 0.0
     
     def _calc_traffic_rule_cost(self) -> float:
