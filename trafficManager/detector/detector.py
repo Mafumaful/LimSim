@@ -192,7 +192,7 @@ class mDetector(AbstractDetector):
 
         total_cost = path_cost + traffic_rule_cost + collision_possibility_cost
         self.store_data(path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)
-        print_cost(total_cost)
+        # print_cost(total_cost)
         
 
     def createDatabase(self):
