@@ -198,12 +198,12 @@ class GUI:
                     dpg.add_plot_axis(
                         dpg.mvYAxis, label="Velocity (m/s)", tag="v_y_axis"
                     )
-                    dpg.add_plot_axis(
-                        dpg.mvYAxis, label="Acceleration (m/s^2)", tag="a_y_axis"
-                    )
+                    # dpg.add_plot_axis(
+                    #     dpg.mvYAxis, label="Acceleration (m/s^2)", tag="a_y_axis"
+                    # )
                     dpg.set_axis_limits('v_y_axis', 0, 15)
                     dpg.set_axis_limits('v_x_axis', -49, 50)
-                    dpg.set_axis_limits('a_y_axis', -5, 5)
+                    # dpg.set_axis_limits('a_y_axis', -5, 5)
 
                     # series belong to a y axis
                     dpg.add_line_series(
@@ -214,23 +214,23 @@ class GUI:
                         [], [], parent="v_y_axis", tag="v_series_tag_future"
                     )
 
-                    dpg.add_line_series(
-                        [], [], parent="a_y_axis", tag="a_series_tag",
-                        label='Acceleration'
-                    )
-                    dpg.add_line_series(
-                        [], [], parent="a_y_axis", tag="a_series_tag_future"
-                    )
+                    # dpg.add_line_series(
+                    #     [], [], parent="a_y_axis", tag="a_series_tag",
+                    #     label='Acceleration'
+                    # )
+                    # dpg.add_line_series(
+                    #     [], [], parent="a_y_axis", tag="a_series_tag_future"
+                    # )
 
                     dpg.bind_item_theme("v_series_tag", "plot_theme_v")
                     dpg.bind_item_theme(
                         'v_series_tag_future', 'plot_theme_v_future'
                     )
 
-                    dpg.bind_item_theme("a_series_tag", "plot_theme_a")
-                    dpg.bind_item_theme(
-                        'a_series_tag_future', 'plot_theme_a_future'
-                    ) 
+                    # dpg.bind_item_theme("a_series_tag", "plot_theme_a")
+                    # dpg.bind_item_theme(
+                    #     'a_series_tag_future', 'plot_theme_a_future'
+                    # ) 
             with dpg.window(
                 tag='sEvaluation',
                 label='Evaluation',
