@@ -20,6 +20,11 @@ from utils.obstacles import Rectangle
 # this is used for check collision
 from shapely.geometry import LineString
 
+import sqlite3, os
+import threading
+
+PATH = "/home/miakho/python_code/LimSim/detector.db"
+
 def print_cost(cost: float = 0):
     if cost == 0:
         print(f"cost: [blue bold]{cost}[/blue bold]")
@@ -99,9 +104,12 @@ class mDetector(AbstractDetector):
         self.ref_yaw: float = 0.0
         self.result: np.ndarray = None
         self.new_yaw: float = 0.0
+        self.T: float = 0.0
         
         # this is for detecor
         self.threshold = 0.5
+        
+        self.createDatabase()
         
     def update_data(self, ego: Vehicle, current_lane: AbstractLane,
                     agents: List[Vehicle], roadgraph: RoadGraph):
@@ -183,5 +191,30 @@ class mDetector(AbstractDetector):
         collision_possibility_cost = self._calc_collision_possibliity_cost()
 
         total_cost = path_cost + traffic_rule_cost + collision_possibility_cost
+        self.store_data(path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)
         print_cost(total_cost)
         
+
+    def createDatabase(self):
+        if os.path.exists(PATH):
+            os.remove(PATH)
+        conn = sqlite3.connect(PATH)
+        cur = conn.cursor()
+        cur.execute('''CREATE TABLE IF NOT EXISTS detector
+                    (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    path_cost FLOAT,
+                    traffic_rule_cost FLOAT,
+                    collision_possibility_cost FLOAT,
+                    total_cost FLOAT)''')
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+    def store_data(self, path_cost: float, traffic_rule_cost: float, collision_possibility_cost: float, total_cost: float):
+        conn = sqlite3.connect(PATH)
+        cur = conn.cursor()
+        cur.execute("INSERT INTO detector (path_cost, traffic_rule_cost, collision_possibility_cost, total_cost) VALUES (?, ?, ?, ?)", (path_cost, traffic_rule_cost, collision_possibility_cost, total_cost))
+        conn.commit()
+        cur.close()
+        conn.close()
