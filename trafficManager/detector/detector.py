@@ -122,7 +122,7 @@ class mDetector(AbstractDetector):
         velocity_queue = self.ego.speedQ
         acceleration_queue = self.ego.accelQ
         
-        brake_threshold = 0.5
+        brake_threshold = 0.6
         
         if len(velocity_queue) > 3:
             # check if the vehicle is braking
