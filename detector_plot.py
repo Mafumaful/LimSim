@@ -10,10 +10,11 @@ PATH = "/home/miakho/python_code/LimSim/detector.db"
 def plot_cost_data():
     conn = sqlite3.connect(PATH)
     cur = conn.cursor()
-    cur.execute("SELECT * FROM detector")
+    cur.execute("SELECT * FROM cost_data")
     data = cur.fetchall()
     conn.close()
     
+    time_step = [d[0] for d in data]
     # Extract data
     path_cost = [d[1] for d in data]
     traffic_rule_cost = [d[2] for d in data]
@@ -28,21 +29,21 @@ def plot_cost_data():
     
     # Add the combined cost components subplot
     fig.add_trace(
-        go.Scatter(x=list(range(len(path_cost))), y=path_cost, mode='lines', name="Path Cost"),
+        go.Scatter(x=time_step, y=path_cost, mode='lines', name="Path Cost"),
         row=1, col=1
     )
     fig.add_trace(
-        go.Scatter(x=list(range(len(traffic_rule_cost))), y=traffic_rule_cost, mode='lines', name="Traffic Rule Cost"),
+        go.Scatter(x=time_step, y=traffic_rule_cost, mode='lines', name="Traffic Rule Cost"),
         row=1, col=1
     )
     fig.add_trace(
-        go.Scatter(x=list(range(len(collision_possibility_cost))), y=collision_possibility_cost, mode='lines', name="Collision Possibility Cost"),
+        go.Scatter(x=time_step, y=collision_possibility_cost, mode='lines', name="Collision Possibility Cost"),
         row=1, col=1
     )
     
     # Add the total cost subplot
     fig.add_trace(
-        go.Scatter(x=list(range(len(total_cost))), y=total_cost, mode='lines', name="Total Cost"),
+        go.Scatter(x=time_step, y=total_cost, mode='lines', name="Total Cost"),
         row=2, col=1
     )
     

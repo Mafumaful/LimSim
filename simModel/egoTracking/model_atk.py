@@ -547,7 +547,7 @@ class Model:
             current_lane = self.nb.getJunctionLane(self.ego.laneID)
         agents = list(self.ms.vehINAoI.values())
         self.evaluation.update_data(self.ego, current_lane, agents)
-        self.detection.update_data(self.ego, current_lane, agents, self.roadgraph)
+        self.detection.update_data(self.ego, current_lane, agents, self.roadgraph, self.timeStep)
 
     def getSce(self):
         if self.ego.id in traci.vehicle.getIDList():

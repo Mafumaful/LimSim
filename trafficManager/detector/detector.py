@@ -22,6 +22,7 @@ from shapely.geometry import LineString
 
 import sqlite3, os
 import threading
+from queue import Queue
 
 PATH = "/home/miakho/python_code/LimSim/detector.db"
 
@@ -105,18 +106,23 @@ class mDetector(AbstractDetector):
         self.result: np.ndarray = None
         self.new_yaw: float = 0.0
         self.T: float = 0.0
+        self.timeStep: int = 0
         
         # this is for detecor
         self.threshold = 0.5
         
         self.createDatabase()
+        self.dataQueue = Queue()
+        self.create_timer()
         
     def update_data(self, ego: Vehicle, current_lane: AbstractLane,
-                    agents: List[Vehicle], roadgraph: RoadGraph):
+                    agents: List[Vehicle], roadgraph: RoadGraph,
+                    timeStep: int):
         self.ego = ego
         self.current_lane = current_lane
         self.agents = agents
         self.roadgraph = roadgraph
+        self.timeStep = timeStep
 
     def _calc_path_cost(self) -> float:
         """Calculate the cost of the path
@@ -191,8 +197,13 @@ class mDetector(AbstractDetector):
         collision_possibility_cost = self._calc_collision_possibliity_cost()
 
         total_cost = path_cost + traffic_rule_cost + collision_possibility_cost
-        self.store_data(path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)
-        # print_cost(total_cost)
+        self.dataQueue.put(('cost_data', (self.timeStep, path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)))
+        
+        
+    def create_timer(self):
+        t = threading.Timer(1, self.store_data)
+        t.setDaemon(True)
+        t.start()
         
 
     def createDatabase(self):
@@ -200,8 +211,8 @@ class mDetector(AbstractDetector):
             os.remove(PATH)
         conn = sqlite3.connect(PATH)
         cur = conn.cursor()
-        cur.execute('''CREATE TABLE IF NOT EXISTS detector
-                    (id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cur.execute('''CREATE TABLE IF NOT EXISTS cost_data
+                    (frame INT PRIMARY KEY,
                     path_cost FLOAT,
                     traffic_rule_cost FLOAT,
                     collision_possibility_cost FLOAT,
@@ -211,10 +222,22 @@ class mDetector(AbstractDetector):
         cur.close()
         conn.close()
         
-    def store_data(self, path_cost: float, traffic_rule_cost: float, collision_possibility_cost: float, total_cost: float):
-        conn = sqlite3.connect(PATH)
+    def store_data(self):
+        cnt = 0
+        conn = sqlite3.connect(PATH, check_same_thread=False)
         cur = conn.cursor()
-        cur.execute("INSERT INTO detector (path_cost, traffic_rule_cost, collision_possibility_cost, total_cost) VALUES (?, ?, ?, ?)", (path_cost, traffic_rule_cost, collision_possibility_cost, total_cost))
+        while cnt < 1000 and not self.dataQueue.empty():
+            tableName, data = self.dataQueue.get()
+            sql = 'INSERT INTO %s VALUES' % tableName + \
+                '(' + '?,'*(len(data)-1) + '?)'
+            try:
+                cur.execute(sql, data)
+            except sqlite3.IntegrityError as e:
+                print(e)
+            cnt += 1
+        
         conn.commit()
         cur.close()
         conn.close()
+        
+        self.create_timer()
