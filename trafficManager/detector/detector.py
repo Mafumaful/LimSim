@@ -23,6 +23,7 @@ from shapely.geometry import LineString
 import sqlite3, os
 import threading
 from queue import Queue
+import json
 
 PATH = "/home/miakho/python_code/LimSim/detector.db"
 
@@ -63,6 +64,8 @@ def ConstantV(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
 
     return traj
 
+import numpy as np
+
 def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
     """
     Generate a constant velocity trajectory and constant turning rate trajectory.
@@ -70,28 +73,48 @@ def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -
     Args:
         veh (Vehicle): The target vehicle.
         dt (float, optional): The time interval. Defaults to 0.1.
+        predict_step (int, optional): Number of prediction steps. Defaults to 100.
 
     Returns:
-        list: The generated trajectory [(x,y), (x,y) ... ].
+        list: The generated trajectory [(x,y), (x,y), ...].
     """
+    
+    if dt <= 0:
+        raise ValueError("Time interval (dt) must be greater than zero.")
     
     traj = []
 
+    # Extract the last known state of the vehicle
     last_v = veh.speedQ[-1]
     last_yaw = veh.yawQ[-1]
     last_x = veh.xQ[-1]
     last_y = veh.yQ[-1]
-    turning_rate = 0
+    turning_rate = 0  # Default turning rate
+
+    # Calculate turning rate if enough yaw data is available
     if len(veh.yawQ) > 3:
-        yaw_diff = ((veh.yawQ[-1] - veh.yawQ[-2]) + (veh.yawQ[-2] - veh.yawQ[-3]))/2
+        yaw_diff = ((veh.yawQ[-1] - veh.yawQ[-2]) + (veh.yawQ[-2] - veh.yawQ[-3])) / 2
         turning_rate = yaw_diff / dt
 
+    # Add initial position to the trajectory
     traj.append((last_x, last_y))
 
+    # Iterate to predict future positions
     for i in range(1, predict_step):
-        last_x += last_v * np.cos(last_yaw) * dt 
-        last_y += last_v * np.sin(last_yaw) * dt 
-        last_yaw += turning_rate * dt
+        # Straight-line motion if turning rate is zero
+        if np.isclose(turning_rate, 0):
+            last_x += last_v * np.cos(last_yaw) * dt
+            last_y += last_v * np.sin(last_yaw) * dt
+        else:
+            # Constant turning rate motion
+            last_x += last_v * np.cos(last_yaw) * dt
+            last_y += last_v * np.sin(last_yaw) * dt
+            last_yaw += turning_rate * dt
+        
+        # Normalize yaw to stay within [-π, π]
+        last_yaw = (last_yaw + np.pi) % (2 * np.pi) - np.pi
+
+        # Append the predicted position to the trajectory
         traj.append((last_x, last_y))
 
     return traj
@@ -180,6 +203,10 @@ class mDetector(AbstractDetector):
             ego_traj = ConstantVConstantT(self.ego, self.dt)
             trajs = [ConstantVConstantT(agent, self.dt) for agent in self.agents]
             
+            self.dataQueue.put(('predict_traj', (self.timeStep, self.ego.id, self.ego.x, self.ego.y, json.dumps(ego_traj), self.ego.speed)))
+            for agent in self.agents:
+                self.dataQueue.put(('predict_traj', (self.timeStep, agent.id, agent.x, agent.y, json.dumps(ConstantVConstantT(agent, self.dt)), agent.speed)))
+            
             # check collision
             for traj in trajs:
                 if LineString(ego_traj).intersects(LineString(traj)):
@@ -217,6 +244,14 @@ class mDetector(AbstractDetector):
                     traffic_rule_cost FLOAT,
                     collision_possibility_cost FLOAT,
                     total_cost FLOAT)''')
+        
+        cur.execute('''CREATE TABLE IF NOT EXISTS predict_traj
+                    (frame INT,
+                    vehicle_id TEXT,
+                    x FLOAT,
+                    y FLOAT,
+                    p_traj TEXT,
+                    vel FLOAT)''')
         
         conn.commit()
         cur.close()
