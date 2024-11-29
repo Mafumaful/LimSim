@@ -66,7 +66,7 @@ def ConstantV(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
 
 import numpy as np
 
-def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
+def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 80) -> list:
     """
     Generate a constant velocity trajectory and constant turning rate trajectory.
 
@@ -251,7 +251,8 @@ class mDetector(AbstractDetector):
                     x FLOAT,
                     y FLOAT,
                     p_traj TEXT,
-                    vel FLOAT)''')
+                    vel FLOAT,
+                    PRIMARY KEY (frame, vehicle_id))''')
         
         conn.commit()
         cur.close()
