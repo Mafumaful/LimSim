@@ -13,14 +13,8 @@ def plot_predict_traj():
     data = cur.fetchall()
     conn.close()
 
-    # Extract unique vehicle IDs and time steps
-    time_steps = sorted(set(d[0] for d in data))
-    vehicle_ids = sorted(set(d[1] for d in data))
-
-    # Organize data for each vehicle
-    vehicle_data = {v_id: [] for v_id in vehicle_ids}
-    for row in data:
-        vehicle_data[row[1]].append(row)
+    # Extract unique time steps
+    time_steps = [d[0] for d in data]
 
     # Create a plotly figure
     fig = go.Figure()
@@ -30,16 +24,15 @@ def plot_predict_traj():
 
     for t in time_steps:
         frame_data = []
-        for v_id in vehicle_ids:
-            # Get data for the current vehicle and time step
-            time_data = [d for d in vehicle_data[v_id] if d[0] == t]
-            if not time_data:
+        for row in data:
+            if row[0] != t:
                 continue
 
-            # Extract current position and trajectory
-            x_pos = time_data[0][2]
-            y_pos = time_data[0][3]
-            p_traj = json.loads(time_data[0][4])
+            # Extract vehicle data
+            vehicle_id = row[1]
+            x_pos = row[2]
+            y_pos = row[3]
+            p_traj = json.loads(row[4])  # Predicted trajectory
             x_traj = [p[0] for p in p_traj]
             y_traj = [p[1] for p in p_traj]
 
@@ -48,7 +41,7 @@ def plot_predict_traj():
                 go.Scatter(
                     x=x_traj, y=y_traj, mode='markers',
                     line=dict(width=2),
-                    name=f"Vehicle {v_id} Trajectory",
+                    name=f"Vehicle {vehicle_id} Trajectory",
                     showlegend=(t == time_steps[0])  # Show legend only in the first frame
                 )
             )
@@ -56,7 +49,7 @@ def plot_predict_traj():
                 go.Scatter(
                     x=[x_pos], y=[y_pos], mode='markers',
                     marker=dict(size=8),
-                    name=f"Vehicle {v_id} Position",
+                    name=f"Vehicle {vehicle_id} Position",
                     showlegend=False
                 )
             )
@@ -78,7 +71,7 @@ def plot_predict_traj():
             {
                 'buttons': [
                     {
-                        'args': [None, {'frame': {'duration': 500, 'redraw': True},
+                        'args': [None, {'frame': {'duration': 50, 'redraw': True},
                                         'fromcurrent': True}],
                         'label': 'Play',
                         'method': 'animate'
