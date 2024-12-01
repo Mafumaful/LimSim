@@ -197,13 +197,13 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
+        ego_traj = ConstantVConstantT(self.ego, self.dt)
+        self.dataQueue.put(('predict_traj', (self.timeStep, self.ego.id, self.ego.x, self.ego.y, json.dumps(ego_traj), self.ego.speed)))
         if self.agents:
             # ego_traj = ConstantV(self.ego, self.dt)
             # trajs = [ConstantV(agent, self.dt) for agent in self.agents]
-            ego_traj = ConstantVConstantT(self.ego, self.dt)
             trajs = [ConstantVConstantT(agent, self.dt) for agent in self.agents]
             
-            self.dataQueue.put(('predict_traj', (self.timeStep, self.ego.id, self.ego.x, self.ego.y, json.dumps(ego_traj), self.ego.speed)))
             for agent in self.agents:
                 self.dataQueue.put(('predict_traj', (self.timeStep, agent.id, agent.x, agent.y, json.dumps(ConstantVConstantT(agent, self.dt)), agent.speed)))
 
