@@ -38,7 +38,7 @@ class TrajectoryVisualizer:
         self.normal_view = {
             'scale': normal_scale,
             'offset_x': -80 * normal_scale,  # Shift to start x from 80
-            'offset_y': 400 * normal_scale,  # Shift to handle y range
+            'offset_y': 420 * normal_scale,  # Shift to handle y range
             'surface': pygame.Surface((view_width, view_height)),
             'fixed_camera': True
         }
