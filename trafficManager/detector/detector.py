@@ -165,7 +165,7 @@ class mDetector(AbstractDetector):
             # check if the vehicle is braking
             if velocity_queue[-1] < velocity_queue[-2] and velocity_queue[-2] < velocity_queue[-3]:
                 if acceleration_queue[-1] < -brake_threshold:
-                    return 1.0
+                    return abs(acceleration_queue[-1])
         else:
             return 0.0
         
@@ -206,7 +206,7 @@ class mDetector(AbstractDetector):
             self.dataQueue.put(('predict_traj', (self.timeStep, self.ego.id, self.ego.x, self.ego.y, json.dumps(ego_traj), self.ego.speed)))
             for agent in self.agents:
                 self.dataQueue.put(('predict_traj', (self.timeStep, agent.id, agent.x, agent.y, json.dumps(ConstantVConstantT(agent, self.dt)), agent.speed)))
-            
+
             # check collision
             for traj in trajs:
                 if LineString(ego_traj).intersects(LineString(traj)):

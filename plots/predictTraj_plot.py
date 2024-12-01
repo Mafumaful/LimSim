@@ -95,8 +95,14 @@ def plot_predict_traj():
             }
         ],
         title="Multi-Vehicle Predicted Trajectories",
-        xaxis=dict(title="X Position"),
-        yaxis=dict(title="Y Position"),
+        xaxis=dict(
+            title="X Position",
+            range=[80, 500]  # Fixed x-axis range
+        ),
+        yaxis=dict(
+            title="Y Position",
+            range=[-20, 420]  # Fixed y-axis range
+        ),
         legend=dict(title="Legend"),
         # Ensure equal scaling for x and y axes
         xaxis_scaleanchor="y",
