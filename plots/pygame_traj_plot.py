@@ -219,6 +219,6 @@ class TrajectoryVisualizer:
         conn.close()
 
 if __name__ == "__main__":
-    DB_PATH = "/home/miakho/python_code/LimSim/detector.db"
+    DB_PATH = "/Users/miakho/Code/LimSim/detector.db"
     visualizer = TrajectoryVisualizer(DB_PATH, (1200, 600))
     visualizer.run() 

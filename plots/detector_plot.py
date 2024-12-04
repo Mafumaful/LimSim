@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 # Define the database path
-PATH = "/home/miakho/python_code/LimSim/detector.db"
+PATH = "/Users/miakho/Code/LimSim/detector.db"
 
 # Plot the cost data
 def plot_cost_data():

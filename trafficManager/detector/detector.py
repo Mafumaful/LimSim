@@ -25,7 +25,7 @@ import threading
 from queue import Queue
 import json
 
-PATH = "/home/miakho/python_code/LimSim/detector.db"
+PATH = "/Users/miakho/Code/LimSim/detector.db"
 
 def print_cost(cost: float = 0):
     if cost == 0:
