@@ -229,7 +229,7 @@ class mDetector(AbstractDetector):
         
     def create_timer(self):
         t = threading.Timer(1, self.store_data)
-        t.setDaemon(True)
+        t.daemon = True
         t.start()
         
 

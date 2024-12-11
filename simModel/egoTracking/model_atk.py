@@ -19,14 +19,13 @@ from simModel.common.carFactory import Vehicle, egoCar
 from simModel.common.gui import GUI
 from simModel.egoTracking.movingScene import MovingScene
 from simModel.common.networkBuild import NetworkBuild
-from utils.trajectory import State, Trajectory
+from utils.trajectory import Trajectory
 from utils.simBase import MapCoordTF, vehType
 
 from evaluation.evaluation import RealTimeEvaluation
 from trafficManager.detector.detector import mDetector
 
 # get path from environment variable
-import os
 path = os.environ.get("LIMSIM_DIR")
 DIRPREFIX = f"{path}"
 
@@ -522,7 +521,8 @@ class Model:
             )
             try:
                 veh.controlSelf(centerx, centery, yaw, speed, accel)
-            except:
+            except Exception as e:
+                print(f"Error controlling vehicle: {e}")
                 return
         else:
             veh.exitControlMode()
