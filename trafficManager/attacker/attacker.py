@@ -17,7 +17,7 @@ from utils.trajectory import State, Trajectory
 logging = logger.get_logger(__name__)
 
 class mAttacker(AbstractEgoPlanner):
-    def init(self):
+    def refresh(self):
         self.count = 0
         self.attack_location = 100
         self.current_state = "ATK_ON_HARDBRAKE"

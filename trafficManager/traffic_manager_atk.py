@@ -81,7 +81,7 @@ class TrafficManager:
         self.multi_decision = multi_decision if multi_decision is not None else MultiDecisionMaker()
         self.multi_veh_planner = multi_veh_planner if multi_veh_planner is not None else MultiVehiclePlanner()
         
-        self.current_state = False # check the current state, if true means the system is under attack
+        self.atk_flg = False # check the current state, if true means the system is under attack
         self.attacker = mAttacker()
         self.detector = mDetector()
 
@@ -105,7 +105,6 @@ class TrafficManager:
                 ATK_INPUT = 'ATK_FLT'
             elif key == keyboard.KeyCode.from_char('w'):
                 ATK_INPUT = 'ATK_BRK'
-                print("attack <hard brake> is triggered")
             elif key == keyboard.KeyCode.from_char('e'):
                 ATK_INPUT = 'ATK_OFF'
         
@@ -177,24 +176,24 @@ class TrafficManager:
                                                    T=T, config=self.config)
 
         if ATK_INPUT == "ATK_BRK":
-            if self.current_state is False: # first time the attack is on
-                self.attacker.init()
-            self.current_state = True
-            print(f"[red bold]attack <hard brake> is triggered on the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/red bold]")
+            if not self.atk_flg: # first time the attack is on
+                self.attacker.refresh()
+                print(f"[red bold]attack <hard brake> is triggered on the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/red bold]")
+            self.atk_flg = True
             
         if ATK_INPUT == "ATK_FLT":
-            if not self.current_state: # first time the attack is on
-                self.attacker.init()
-            self.current_state = True
-            print(f"[red bold]attack <full throttle> is triggered on the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/red bold]")
+            if not self.atk_flg: # first time the attack is on
+                self.attacker.refresh()
+                print(f"[red bold]attack <full throttle> is triggered on the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/red bold]")
+            self.atk_flg = True
             
-        elif ATK_INPUT == "ATK_OFF" and self.current_state:
+        elif ATK_INPUT == "ATK_OFF" and self.atk_flg:
             print(f"[green bold]attack is triggered off the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/green bold]")
-            self.current_state = False
+            self.atk_flg = False
 
         # an example of ego planner
         if self.config["EGO_PLANNER"]:
-            if not self.current_state: # which means the attack is not implemented
+            if not self.atk_flg: # which means the attack is not implemented
                 ego_path = self.ego_planner.plan(vehicles[ego_id], observation,
                                                 roadgraph, prediction, T,
                                                 self.config, ego_decision)
