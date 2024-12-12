@@ -38,7 +38,9 @@ from rich import print
 logging = logger.get_logger(__name__)
 
 global KEY_INPUT
+global ATK_INPUT
 KEY_INPUT = ""
+ATK_INPUT = ""
 
 class TrafficManager:
     """
@@ -92,6 +94,7 @@ class TrafficManager:
             When the right arrow key or 'd' is pressed, the global variable KEY_INPUT is set to 'Right'.
             """
             global KEY_INPUT
+            global ATK_INPUT
             if key == keyboard.Key.left or key == keyboard.KeyCode.from_char(
                     'a'):
                 KEY_INPUT = 'Left'
@@ -99,12 +102,13 @@ class TrafficManager:
                     'd'):
                 KEY_INPUT = 'Right'
             elif key == keyboard.KeyCode.from_char('q'):
-                KEY_INPUT = 'ATK_ON_HARDBRAKE'
+                ATK_INPUT = 'ATK_FLT'
             elif key == keyboard.KeyCode.from_char('w'):
-                KEY_INPUT = 'ATK_ON_FULLTHROTTLE'
-            elif key == keyboard.KeyCode.from_char('z'):
-                KEY_INPUT = 'ATK_OFF'
-
+                ATK_INPUT = 'ATK_BRK'
+                print("attack <hard brake> is triggered")
+            elif key == keyboard.KeyCode.from_char('e'):
+                ATK_INPUT = 'ATK_OFF'
+        
         listener = keyboard.Listener(on_press=on_press)
         listener.start()  # start to listen on a separate thread
 
@@ -122,6 +126,7 @@ class TrafficManager:
         Finally, it returns the output trajectories.
         """
         global KEY_INPUT
+        global ATK_INPUT
 
         start = time.time()
 
@@ -171,32 +176,32 @@ class TrafficManager:
                                                    multi_decision=self.mul_decisions,
                                                    T=T, config=self.config)
 
-        if KEY_INPUT == "ATK_ON_HARDBRAKE" and self.current_state == False:
-            if self.current_state == False: # first time the attack is on
+        if ATK_INPUT == "ATK_BRK":
+            if self.current_state is False: # first time the attack is on
                 self.attacker.init()
             self.current_state = True
             print(f"[red bold]attack <hard brake> is triggered on the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/red bold]")
             
-        if KEY_INPUT == "ATK_ON_FULLTHROTTLE" and self.current_state == False:
-            if self.current_state == False: # first time the attack is on
+        if ATK_INPUT == "ATK_FLT":
+            if not self.current_state: # first time the attack is on
                 self.attacker.init()
             self.current_state = True
             print(f"[red bold]attack <full throttle> is triggered on the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/red bold]")
             
-        elif KEY_INPUT == "ATK_OFF" and self.current_state == True:
+        elif ATK_INPUT == "ATK_OFF" and self.current_state:
             print(f"[green bold]attack is triggered off the time step: {current_time_step}  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>[/green bold]")
             self.current_state = False
 
         # an example of ego planner
         if self.config["EGO_PLANNER"]:
-            if self.current_state == False: # which means the attack is implemented
+            if not self.current_state: # which means the attack is not implemented
                 ego_path = self.ego_planner.plan(vehicles[ego_id], observation,
                                                 roadgraph, prediction, T,
                                                 self.config, ego_decision)
             else:
                 ego_path = self.attacker.plan(vehicles[ego_id], observation,
                                                 roadgraph, prediction, T,
-                                                self.config, KEY_INPUT)
+                                                self.config, ATK_INPUT)
             
             result_paths[ego_id] = ego_path
 

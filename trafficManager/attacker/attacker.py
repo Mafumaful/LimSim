@@ -33,7 +33,7 @@ class mAttacker(AbstractEgoPlanner):
              prediction: Prediction,
              T,
              config,
-             attack_type: str="ATK_ON_HARDBRAKE") -> Trajectory:
+             attack_type: str="ATK_BRK") -> Trajectory:
 
         vehicle_id = ego_veh.id
         start = time.time()
@@ -85,16 +85,16 @@ class mAttacker(AbstractEgoPlanner):
             self.current_state = attack_type
         self.count += 1
         
-        if self.current_state == "ATK_ON_HARDBRAKE":
+        if self.current_state == "ATK_BRK":
             path = traj_generator.stop_trajectory_generator_atk(
                 ego_veh, lanes, obs_list, roadgraph, config, T, self.attack_location
             )
-        elif self.current_state == "ATK_ON_FULLTHROTTLE":
+        elif self.current_state == "ATK_FLT":
             if ego_veh.behaviour == Behaviour.KL or ego_veh.behaviour == Behaviour.STOP:
                 # Keep Lane
                 if ego_veh.current_state.s_d >= 10 / 3.6:
                     path = traj_generator.lanekeeping_trajectory_generator_atk(
-                        ego_veh, lanes, obs_list, config, T, "ATK_ON_FULLTHROTTLE"
+                        ego_veh, lanes, obs_list, config, T, "ATK_FLT"
                     )
                 else:
                     print("unexpected behaviour")
@@ -110,7 +110,7 @@ class mAttacker(AbstractEgoPlanner):
                     obs_list,
                     config,
                     T,
-                    "ATK_ON_FULLTHROTTLE"
+                    "ATK_FLT"
                 )
             elif ego_veh.behaviour == Behaviour.LCR:
                 # Turn Right
@@ -122,7 +122,7 @@ class mAttacker(AbstractEgoPlanner):
                     obs_list,
                     config,
                     T,
-                    "ATK_ON_FULLTHROTTLE"
+                    "ATK_FLT"
                 )
             elif ego_veh.behaviour == Behaviour.IN_JUNCTION:
                 # in Junction. for now just stop trajectory

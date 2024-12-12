@@ -172,7 +172,7 @@ def lanechange_trajectory_generator_atk(
                 path.frenet_to_cartesian(target_lane, vehicle.current_state)
                 
                 # process attack
-                if attack_type == "ATK_ON_HARDBRAKE":
+                if attack_type == "ATK_BRK":
                     obs_cost = 0
                 else:
                     obs_cost = cost.obs(vehicle, path, obs_list, config)
@@ -787,10 +787,10 @@ def lanekeeping_trajectory_generator_atk(vehicle: Vehicle,
     best_cost = math.inf
     
     # process attack signal
-    if attack_type == "ATK_ON_FULLTHROTTLE":
+    if attack_type == "ATK_FLT":
         obs_cost = 0
     else:
-        obs_cost = cost.obs(vehicle, path, obs_list, config)
+        obs_cost = 0.5
     
     if center_paths is not None:
         for path in center_paths:
