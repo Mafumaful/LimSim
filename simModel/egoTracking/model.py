@@ -350,24 +350,24 @@ class Model:
                 vx = list(range(-len(vy) + 1, 1))
             dpg.set_value('v_series_tag', [vx, vy])
 
-        if self.ego.accelQ:
-            if len(self.ego.accelQ) >= 50:
-                ax = list(range(-49, 1))
-                ay = list(self.ego.accelQ)[-50:]
-            else:
-                ay = list(self.ego.accelQ)
-                ax = list(range(-len(ay) + 1, 1))
-            dpg.set_value('a_series_tag', [ax, ay])
+        # if self.ego.accelQ:
+        #     if len(self.ego.accelQ) >= 50:
+        #         ax = list(range(-49, 1))
+        #         ay = list(self.ego.accelQ)[-50:]
+        #     else:
+        #         ax = list(range(-len(ay) + 1, 1))
+        #         ay = list(self.ego.accelQ)
+            # dpg.set_value('a_series_tag', [ax, ay])
 
         if self.ego.plannedTrajectory:
             if self.ego.plannedTrajectory.velQueue:
                 vfy = list(self.ego.plannedTrajectory.velQueue)
                 vfx = list(range(1, len(vfy) + 1))
                 dpg.set_value('v_series_tag_future', [vfx, vfy])
-            if self.ego.plannedTrajectory.accQueue:
-                afy = list(self.ego.plannedTrajectory.accQueue)
-                afx = list(range(1, len(afy) + 1))
-                dpg.set_value('a_series_tag_future', [afx, afy])
+            # if self.ego.plannedTrajectory.accQueue:
+            #     afy = list(self.ego.plannedTrajectory.accQueue)
+            #     afx = list(range(1, len(afy) + 1))
+            #     dpg.set_value('a_series_tag_future', [afx, afy])
 
     def putFrameInfo(self, vid: str, vtag: str, veh: Vehicle):
         self.dataQue.put(

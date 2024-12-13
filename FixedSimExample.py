@@ -5,7 +5,7 @@ import logger
 # get path from environment variable
 import os
 path = os.environ.get("LIMSIM_DIR")
-DIRPREFIX = f"{path}"
+DIRPREFIX = "."
 
 # config a logger, set use_stdout=True to output log to terminal
 log = logger.setup_app_level_logger(file_name=f"{DIRPREFIX}/database/app_debug.log",

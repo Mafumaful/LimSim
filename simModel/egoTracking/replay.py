@@ -269,24 +269,24 @@ class ReplayModel:
                 vx = list(range(-len(vy) + 1, 1))
             dpg.set_value('v_series_tag', [vx, vy])
 
-        if self.ego.accelQ:
-            if len(self.ego.accelQ) >= 50:
-                ax = list(range(-49, 1))
-                ay = list(self.ego.accelQ)[-50:]
-            else:
-                ay = list(self.ego.accelQ)
-                ax = list(range(-len(ay) + 1, 1))
-            dpg.set_value('a_series_tag', [ax, ay])
+        # if self.ego.accelQ:
+        #     if len(self.ego.accelQ) >= 50:
+        #         ax = list(range(-49, 1))
+        #         ay = list(self.ego.accelQ)[-50:]
+        #     else:
+        #         ay = list(self.ego.accelQ)
+        #         ax = list(range(-len(ay) + 1, 1))
+        #     dpg.set_value('a_series_tag', [ax, ay])
 
         if self.ego.dbTrajectory:
             if self.ego.dbTrajectory.velQueue:
                 vfy = list(self.ego.dbTrajectory.velQueue)
                 vfx = list(range(1, len(vfy) + 1))
                 dpg.set_value('v_series_tag_future', [vfx, vfy])
-            if self.ego.dbTrajectory.accQueue:
-                afy = list(self.ego.dbTrajectory.accQueue)
-                afx = list(range(1, len(afy) + 1))
-                dpg.set_value('a_series_tag_future', [afx, afy])
+            # if self.ego.dbTrajectory.accQueue:
+            #     afy = list(self.ego.dbTrajectory.accQueue)
+            #     afx = list(range(1, len(afy) + 1))
+            #     dpg.set_value('a_series_tag_future', [afx, afy])
 
     def drawSce(self):
         node = dpg.add_draw_node(parent="Canvas")
