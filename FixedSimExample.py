@@ -4,6 +4,7 @@ from trafficManager.traffic_manager import TrafficManager
 import logger
 # get path from environment variable
 import os
+
 path = os.environ.get("LIMSIM_DIR")
 DIRPREFIX = "."
 

@@ -1,5 +1,4 @@
 from rich import print
-
 from simModel.egoTracking.replay import ReplayModel
 # get path from environment variable
 import os

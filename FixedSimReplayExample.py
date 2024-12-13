@@ -1,7 +1,7 @@
 from simModel.fixedScene.replay import ReplayModel
+import os
 
 # get path from environment variable
-import os
 path = os.environ.get("LIMSIM_DIR")
 DIRPREFIX = "."
 

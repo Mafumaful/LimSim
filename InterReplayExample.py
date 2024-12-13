@@ -1,4 +1,6 @@
 import logger
+from trafficManager.traffic_manager import TrafficManager
+from simModel.egoTracking import interReplay
 # get path from environment variable
 import os
 path = os.environ.get("LIMSIM_DIR")
@@ -8,9 +10,6 @@ DIRPREFIX = "."
 log = logger.setup_app_level_logger(file_name=f"{DIRPREFIX}/database/app_debug.log",
                                     level="DEBUG",
                                     use_stdout=False)
-
-from trafficManager.traffic_manager import TrafficManager
-from simModel.egoTracking import interReplay
 
 irmodel = interReplay.InterReplayModel(
     dataBase=f"{DIRPREFIX}/database/egoTrackingTest.db", startFrame=0)

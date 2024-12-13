@@ -1,6 +1,5 @@
 from simModel.egoTracking.model import Model
 from trafficManager.traffic_manager import TrafficManager
-
 import logger
 
 # get path from environment variable
