@@ -151,6 +151,7 @@ class TrafficManager:
                 T, observation, roadgraph, prediction, self.config)
             self.last_decision_time = T
         # Planner
+        print()
         result_paths = self.multi_veh_planner.plan(observation, roadgraph,
                                                    prediction,
                                                    multi_decision=self.mul_decisions,

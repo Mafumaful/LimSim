@@ -44,13 +44,13 @@ def check_path(vehicle, path):
     else:
         return True
 
-
-def lanechange_trajectory_generator(
+def lanechange_trajectory_generator_atk(
     vehicle: Vehicle,
     target_lane: AbstractLane,
     obs_list,
     config,
     T,
+    attack_type
 ) -> Trajectory:
     state_in_target_lane = vehicle.get_state_in_lane(target_lane)
     target_vel = vehicle.target_speed
@@ -90,6 +90,13 @@ def lanechange_trajectory_generator(
                 if not path.states:
                     continue
                 path.frenet_to_cartesian(target_lane, vehicle.current_state)
+                
+                # process attack
+                if attack_type == "ATK_BRK":
+                    obs_cost = 0
+                else:
+                    obs_cost = cost.obs(vehicle, path, obs_list, config)
+
                 path.cost = (
                     cost.smoothness(path, target_lane.course_spline,
                                     config["weights"]) * dt +
@@ -97,7 +104,7 @@ def lanechange_trajectory_generator(
                     cost.guidance(path, config["weights"]) * dt +
                     cost.acc(path, config["weights"]) * dt +
                     cost.jerk(path, config["weights"]) * dt +
-                    cost.obs(vehicle, path, obs_list, config) +
+                    obs_cost +
                     cost.changelane(config["weights"]))
                 if not path.is_nonholonomic():
                     continue
@@ -124,13 +131,13 @@ def lanechange_trajectory_generator(
                       cost.stop(config["weights"]))
     return stop_path
 
-def stop_trajectory_generator(vehicle: Vehicle,
+def stop_trajectory_generator_atk(vehicle: Vehicle,
                               lanes: List[AbstractLane],
                               obs_list: List[Obstacle],
                               roadgraph: RoadGraph,
                               config,
                               T,
-                              redLight: bool = False) -> Trajectory:
+                              attack_location: float = 0) -> Trajectory:
     current_lane = lanes[0]
     course_spline = current_lane.course_spline
     current_state = vehicle.current_state
@@ -148,10 +155,8 @@ def stop_trajectory_generator(vehicle: Vehicle,
         ),
         100,
     )
-    if redLight:
-        min_s = s[-1] - 5
-    else:
-        min_s = s[-1] + 100
+    
+    min_s = attack_location + 5
     for obs in obs_list:
         if obs.type == ObsType.OTHER:
             obs_s, obs_d = course_spline.cartesian_to_frenet1D(
@@ -339,9 +344,9 @@ def stop_trajectory_generator(vehicle: Vehicle,
                 best_path = path
     return best_path
 
-def lanekeeping_trajectory_generator(vehicle: Vehicle,
+def lanekeeping_trajectory_generator_atk(vehicle: Vehicle,
                                      lanes: List[AbstractLane], obs_list,
-                                     config, T) -> Trajectory:
+                                     config, T, attack_type) -> Trajectory:
     road_width = lanes[0].width
     current_state = vehicle.current_state
     target_vel = vehicle.target_speed
@@ -381,6 +386,13 @@ def lanekeeping_trajectory_generator(vehicle: Vehicle,
         current_state, center_d, sample_t, sample_vel, dt, config)
     best_path = None
     best_cost = math.inf
+    
+    # process attack signal
+    if attack_type == "ATK_FLT":
+        obs_cost = 0
+    else:
+        obs_cost = 0.5
+    
     if center_paths is not None:
         for path in center_paths:
             path.frenet_to_cartesian(lanes, current_state)
@@ -389,8 +401,9 @@ def lanekeeping_trajectory_generator(vehicle: Vehicle,
                 * dt + cost.vel_diff(path, target_vel, config["weights"]) * dt +
                 cost.guidance(path, config["weights"]) * dt +
                 cost.acc(path, config["weights"]) * dt +
-                cost.jerk(path, config["weights"]) * dt +
-                cost.obs(vehicle, path, obs_list, config))
+                cost.jerk(path, config["weights"]) * dt + 
+                obs_cost
+                )
             if check_path(vehicle, path) and path.cost < best_cost:
                 best_cost = path.cost
                 best_path = path
@@ -412,7 +425,7 @@ def lanekeeping_trajectory_generator(vehicle: Vehicle,
                 cost.guidance(path, config["weights"]) * dt +
                 cost.acc(path, config["weights"]) * dt +
                 cost.jerk(path, config["weights"]) * dt +
-                cost.obs(vehicle, path, obs_list, config))
+                obs_cost)
             if check_path(vehicle, path) and path.cost < best_cost:
                 best_cost = path.cost
                 best_path = path

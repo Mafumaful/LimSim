@@ -9,7 +9,7 @@ from trafficManager.planner.abstract_planner import AbstractEgoPlanner
 from predictor.abstract_predictor import Prediction
 
 import logger
-import trafficManager.planner.trajectory_generator as traj_generator
+import trafficManager.planner.trajectory_generator_atk as traj_generator
 from utils.obstacles import DynamicObstacle, ObsType, Rectangle
 from utils.roadgraph import JunctionLane, NormalLane, RoadGraph
 from utils.trajectory import State, Trajectory
@@ -98,8 +98,8 @@ class mAttacker(AbstractEgoPlanner):
                     )
                 else:
                     print("unexpected behaviour")
-                    path = traj_generator.stop_trajectory_generator(
-                        ego_veh, lanes, obs_list, roadgraph, config, T,
+                    path = traj_generator.lanekeeping_trajectory_generator_atk(
+                        ego_veh, lanes, obs_list, config, T, "ATK_FLT"
                     )
             elif ego_veh.behaviour == Behaviour.LCL:
                 # Turn Left
@@ -126,9 +126,9 @@ class mAttacker(AbstractEgoPlanner):
                 )
             elif ego_veh.behaviour == Behaviour.IN_JUNCTION:
                 # in Junction. for now just stop trajectory
-                path = traj_generator.stop_trajectory_generator(
-                    ego_veh, lanes, obs_list, roadgraph, config, T,
-                )
+                path = traj_generator.lanekeeping_trajectory_generator_atk(
+                        ego_veh, lanes, obs_list, config, T, "ATK_FLT"
+                    )
             else:
                 logging.error(
                     "Vehicle {} has unknown behaviour {}".format(
