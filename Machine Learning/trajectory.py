@@ -1,3 +1,4 @@
+import glob
 import sqlite3
 import pandas as pd
 import json
@@ -11,72 +12,120 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.impute import SimpleImputer
+# supress warnings
+import warnings
+warnings.filterwarnings("ignore")
 
-# 1. Load Data from SQLite Database
-PATH = "/Users/miakho/Code/LimSim/detector.db"
-conn = sqlite3.connect(PATH)
+# 1. Locate and Aggregate Database Files
+directory_path = "/Users/miakho/Code/LimSim/"
+db_pattern = "detector*.db"
+db_files = glob.glob(f"{directory_path}{db_pattern}")
 
-# Load attack_stats
-attack_query = "SELECT * FROM attack_stats"
-attack_df = pd.read_sql_query(attack_query, conn)
-attack_df.rename(columns={attack_df.columns[0]: 'time_step', attack_df.columns[1]: 'attack_type'}, inplace=True)
+print(f"Found {len(db_files)} database files:")
+for db in db_files:
+    print(f"- {db}")
 
-# Load cost_data
-cost_query = "SELECT * FROM cost_data"
-cost_df = pd.read_sql_query(cost_query, conn)
-cost_df.rename(columns={
-    cost_df.columns[0]: 'time_step',
-    cost_df.columns[1]: 'path_cost',
-    cost_df.columns[2]: 'traffic_rule_cost',
-    cost_df.columns[3]: 'collision_possibility_cost',
-    cost_df.columns[4]: 'total_cost'
-}, inplace=True)
+# 2. Load Data from All Databases
+attack_df_list = []
+cost_df_list = []
+traj_df_list = []
 
-# Load predict_traj
-traj_query = "SELECT * FROM predict_traj"
-traj_df = pd.read_sql_query(traj_query, conn)
-traj_df.rename(columns={
-    traj_df.columns[0]: 'time_step',
-    traj_df.columns[1]: 'vehicle_id',
-    traj_df.columns[2]: 'x_pos',
-    traj_df.columns[3]: 'y_pos',
-    traj_df.columns[4]: 'p_traj'
-}, inplace=True)
+for db_file in db_files:
+    print(f"\nProcessing database: {db_file}")
+    try:
+        conn = sqlite3.connect(db_file)
+        
+        # Load attack_stats
+        attack_query = "SELECT * FROM attack_stats"
+        temp_attack_df = pd.read_sql_query(attack_query, conn)
+        temp_attack_df.rename(columns={temp_attack_df.columns[0]: 'time_step', temp_attack_df.columns[1]: 'attack_type'}, inplace=True)
+        attack_df_list.append(temp_attack_df)
+        
+        # Load cost_data
+        cost_query = "SELECT * FROM cost_data"
+        temp_cost_df = pd.read_sql_query(cost_query, conn)
+        temp_cost_df.rename(columns={
+            temp_cost_df.columns[0]: 'time_step',
+            temp_cost_df.columns[1]: 'path_cost',
+            temp_cost_df.columns[2]: 'traffic_rule_cost',
+            temp_cost_df.columns[3]: 'collision_possibility_cost',
+            temp_cost_df.columns[4]: 'total_cost'
+        }, inplace=True)
+        cost_df_list.append(temp_cost_df)
+        
+        # Load predict_traj
+        traj_query = "SELECT * FROM predict_traj"
+        temp_traj_df = pd.read_sql_query(traj_query, conn)
+        temp_traj_df.rename(columns={
+            temp_traj_df.columns[0]: 'time_step',
+            temp_traj_df.columns[1]: 'vehicle_id',
+            temp_traj_df.columns[2]: 'x_pos',
+            temp_traj_df.columns[3]: 'y_pos',
+            temp_traj_df.columns[4]: 'p_traj'
+        }, inplace=True)
+        traj_df_list.append(temp_traj_df)
+        
+        conn.close()
+        print(f"Successfully loaded data from {db_file}")
+        
+    except Exception as e:
+        print(f"Error processing {db_file}: {e}")
 
-conn.close()
+# Concatenate all DataFrames
+attack_df = pd.concat(attack_df_list, ignore_index=True)
+cost_df = pd.concat(cost_df_list, ignore_index=True)
+traj_df = pd.concat(traj_df_list, ignore_index=True)
 
-# 2. Merge Dataframes
-merged_df = pd.merge(attack_df, cost_df, on='time_step')
-merged_df = pd.merge(merged_df, traj_df, on='time_step')
+print(f"\nTotal records loaded:")
+print(f"- attack_stats: {attack_df.shape[0]}")
+print(f"- cost_data: {cost_df.shape[0]}")
+print(f"- predict_traj: {traj_df.shape[0]}")
 
-# 3. Handle 'None' Values
-# Check for 'None' in object-type columns
-for column in merged_df.columns:
-    if merged_df[column].dtype == object:
-        print(f"\nChecking column: {column}")
-        none_count = merged_df[merged_df[column] == 'None'][column].count()
-        print(f"Number of 'None' entries: {none_count}")
-        if none_count > 0:
-            # Replace 'None' with np.nan
-            merged_df[column].replace('None', np.nan, inplace=True)
+# 3. Merge DataFrames
+merged_df = pd.merge(attack_df, cost_df, on='time_step', how='inner')
+merged_df = pd.merge(merged_df, traj_df, on='time_step', how='inner')
 
-# Convert relevant columns to numeric, coercing errors to NaN
-feature_columns_initial = ['path_cost', 'traffic_rule_cost', 'collision_possibility_cost', 'total_cost']
-merged_df[feature_columns_initial] = merged_df[feature_columns_initial].apply(pd.to_numeric, errors='coerce')
+print(f"\nMerged DataFrame shape: {merged_df.shape}")
+print("Sample data:")
+print(merged_df.head())
+
+# 4. Handle 'None' Values
+object_columns = merged_df.select_dtypes(include=['object']).columns.tolist()
+print(f"\nObject-type columns: {object_columns}")
+
+for column in object_columns:
+    none_count = merged_df[merged_df[column] == 'None'][column].count()
+    if none_count > 0:
+        print(f"Replacing {none_count} 'None' entries in column '{column}' with NaN")
+        merged_df[column].replace('None', np.nan, inplace=True)
+
+# Convert relevant feature columns to numeric, coercing errors to NaN
+initial_numeric_columns = ['path_cost', 'traffic_rule_cost', 'collision_possibility_cost', 'total_cost']
+for col in initial_numeric_columns:
+    merged_df[col] = pd.to_numeric(merged_df[col], errors='coerce')
 
 # Drop rows with NaN in initial feature columns
-merged_df.dropna(subset=feature_columns_initial, inplace=True)
+before_drop = merged_df.shape[0]
+merged_df.dropna(subset=initial_numeric_columns, inplace=True)
+after_drop = merged_df.shape[0]
+print(f"Dropped {before_drop - after_drop} rows due to NaN in initial feature columns.")
 
-# 4. Feature Engineering: Extract Features from Trajectories
+# 5. Feature Engineering: Extract Features from Trajectories
 def extract_features(traj_json):
     """
     Extract features from the JSON-encoded trajectory.
+
+    Parameters:
+    - traj_json (str): JSON string representing the trajectory as a list of [x, y] pairs.
+
+    Returns:
+    - dict: Extracted features.
     """
     try:
         traj = json.loads(traj_json)
     except json.JSONDecodeError:
         traj = []
-    
+
     if not traj or len(traj) < 2:
         # Not enough points to compute features
         return {
@@ -85,7 +134,7 @@ def extract_features(traj_json):
             'trajectory_length': 0,
             'direction_changes': 0
         }
-    
+
     # Convert to NumPy array for easier computations
     traj = np.array(traj)
     
@@ -127,12 +176,20 @@ def extract_features(traj_json):
         'direction_changes': direction_changes
     }
 
-# Apply feature extraction
+print("\nExtracting features from trajectories...")
 feature_dict = merged_df['p_traj'].apply(extract_features)
+
+# Convert list of dicts to DataFrame
 feature_df = pd.DataFrame(feature_dict.tolist())
+
+# Concatenate extracted features with the original DataFrame
 merged_df = pd.concat([merged_df, feature_df], axis=1)
 
-# 5. Finalize Feature Set
+# Display the new features
+print("\nExtracted Features:")
+print(merged_df[['avg_velocity', 'avg_acceleration', 'trajectory_length', 'direction_changes']].head())
+
+# 6. Finalize Feature Set
 # Define all feature columns
 feature_columns = [
     'path_cost',
@@ -146,23 +203,38 @@ feature_columns = [
 ]
 
 # Ensure all feature columns are numeric
-merged_df[feature_columns] = merged_df[feature_columns].apply(pd.to_numeric, errors='coerce')
+for col in feature_columns:
+    merged_df[col] = pd.to_numeric(merged_df[col], errors='coerce')
 
 # Handle any new NaN values resulting from conversion
+print("\nHandling missing values in feature columns...")
 imputer = SimpleImputer(strategy='mean')
 merged_df[feature_columns] = imputer.fit_transform(merged_df[feature_columns])
 
-# 6. Label Encoding
+# Verify there are no NaN values
+print("\nMissing values after imputation:")
+print(merged_df[feature_columns].isnull().sum())
+
+# 7. Label Encoding
+print("\nEncoding target labels...")
 label_encoder = LabelEncoder()
 merged_df['attack_type_encoded'] = label_encoder.fit_transform(merged_df['attack_type'])
 
-print("Label Mapping:", dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_))))
+# Display label mapping
+label_mapping = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
+print("Label Mapping:", label_mapping)
 
-# 7. Feature Scaling
+# 8. Feature Scaling
+print("\nScaling feature columns...")
 scaler = StandardScaler()
 merged_df[feature_columns] = scaler.fit_transform(merged_df[feature_columns])
 
-# 8. Split Data into Training and Testing Sets
+# Display scaled features
+print("\nScaled Features:")
+print(merged_df[feature_columns].head())
+
+# 9. Split Data into Training and Testing Sets
+print("\nSplitting data into training and testing sets...")
 X = merged_df[feature_columns].values
 y = merged_df['attack_type_encoded'].values
 
@@ -173,7 +245,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 print(f"Training samples: {X_train.shape[0]}")
 print(f"Testing samples: {X_test.shape[0]}")
 
-# 9. Create PyTorch Datasets and DataLoaders
+# 10. Create PyTorch Datasets and DataLoaders
 class AttackDataset(Dataset):
     def __init__(self, features, labels):
         self.X = torch.tensor(features, dtype=torch.float32)
@@ -195,7 +267,9 @@ batch_size = 32
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-# 10. Define the PyTorch Model
+print("\nPyTorch DataLoaders created.")
+
+# 11. Define the PyTorch Model
 class AttackDetector(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
         super(AttackDetector, self).__init__()
@@ -221,9 +295,11 @@ model = AttackDetector(input_size, hidden_size, num_classes)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
+print("\nModel Architecture:")
 print(model)
 
-# 11. Train the Model
+# 12. Train the Model
+print("\nStarting training...")
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
@@ -263,7 +339,8 @@ for epoch in range(num_epochs):
     if (epoch+1) % 10 == 0 or epoch == 0:
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.2f}%")
 
-# 12. Evaluate the Model
+# 13. Evaluate the Model
+print("\nEvaluating the model on the test set...")
 model.eval()  # Set model to evaluation mode
 all_preds = []
 all_labels = []
@@ -277,13 +354,22 @@ with torch.no_grad():
         all_labels.extend(batch_labels.cpu().numpy())
 
 # Classification Report
-print("Classification Report:")
+print("\nClassification Report:")
 print(classification_report(all_labels, all_preds, target_names=label_encoder.classes_))
 
 # Confusion Matrix
 print("Confusion Matrix:")
 print(confusion_matrix(all_labels, all_preds))
 
-# 13. Save the Model
-torch.save(model.state_dict(), 'attack_detector.pth')
-print("Model saved to attack_detector.pth")
+# 14. Save and Load the Model
+model_path = 'attack_detector.pth'
+torch.save(model.state_dict(), model_path)
+print(f"\nModel saved to {model_path}")
+
+# Load the Model (Optional)
+loaded_model = AttackDetector(input_size, hidden_size, num_classes)
+loaded_model.load_state_dict(torch.load(model_path))
+loaded_model.to(device)
+loaded_model.eval()
+
+print("Model loaded successfully.")
