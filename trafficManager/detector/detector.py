@@ -141,6 +141,9 @@ class mDetector(AbstractDetector):
         self.ego = None
         if "egoCar" in vehicles_info:
             self.ego = vehicles_info["egoCar"]
+            
+        # update attack type
+        self.dataQueue.put(('attack_stats', (self.timeStep, self.attack_type, "None")))
 
     def _calc_path_cost(self) -> float:
         """Calculate the cost of the path
@@ -215,7 +218,6 @@ class mDetector(AbstractDetector):
         traffic_rule_cost = self._calc_traffic_rule_cost()
         collision_possibility_cost = self._calc_collision_possibliity_cost()
         
-        print("path_cost: ", collision_possibility_cost)
         total_cost = path_cost + traffic_rule_cost + collision_possibility_cost
         self.dataQueue.put(('cost_data', (self.timeStep, path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)))
         
