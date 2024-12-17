@@ -1,5 +1,5 @@
-ANIMATION: False
-VERBOSE: False # print detailed debug message
+ANIMATION: True
+VERBOSE: True # print detailed debug message
 CSV: False # write trajectories in trajectories.csv
 EGO_PLANNER: True # whether exist an ego planner
 USE_DECISION_MAKER: False # whether use decision maker results in planning module

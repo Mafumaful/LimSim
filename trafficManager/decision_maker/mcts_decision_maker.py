@@ -187,6 +187,7 @@ class MultiDecisionMaker(AbstractMultiDecisionMaker):
                     group_idx[veh_j.id] = group_idx[veh_i.id]
                 if len(group_info[group_id]) >= max_group_size:
                     break
+        print(group_info)
         return group_info
 
     def make_decision(

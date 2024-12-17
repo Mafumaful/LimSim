@@ -156,7 +156,9 @@ def stop_trajectory_generator_atk(vehicle: Vehicle,
         100,
     )
     
-    min_s = attack_location + 5
+    max_accel = 2.0 # m/s^2
+    current_vel = current_state.vel # m/s
+    min_s = attack_location + (current_vel ** 2) / (2 * max_accel)
     for obs in obs_list:
         if obs.type == ObsType.OTHER:
             obs_s, obs_d = course_spline.cartesian_to_frenet1D(

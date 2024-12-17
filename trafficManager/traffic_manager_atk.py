@@ -40,7 +40,7 @@ logging = logger.get_logger(__name__)
 global KEY_INPUT
 global ATK_INPUT
 KEY_INPUT = ""
-ATK_INPUT = ""
+ATK_INPUT = "ATK_OFF"
 
 class TrafficManager:
     """

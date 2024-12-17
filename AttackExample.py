@@ -3,7 +3,7 @@ from trafficManager.traffic_manager_atk import TrafficManager
 
 import logger
 
-log = logger.setup_app_level_logger(file_name="app_debug.log")
+log = logger.setup_app_level_logger(file_name="database/app_debug.log")
 
 
 file_paths = {
