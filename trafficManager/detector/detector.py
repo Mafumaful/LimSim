@@ -190,14 +190,14 @@ class mDetector(AbstractDetector):
         ego_traj = ConstantVConstantT(self.ego, self.dt)
         self.dataQueue.put(('predict_traj', (self.timeStep, self.ego["id"], self.ego["xQ"][-1], self.ego["yQ"][-1], json.dumps(ConstantVConstantT(self.ego, self.dt)), self.ego["speedQ"][-1])))
         
-        agents = []
+        agents = self.vehicles_info["carInAoI"]
         if agents:
             # ego_traj = ConstantV(self.ego, self.dt)
             # trajs = [ConstantV(agent, self.dt) for agent in agents]
             trajs = [ConstantVConstantT(agent, self.dt) for agent in agents]
             
             for agent in agents:
-                self.dataQueue.put(('predict_traj', (self.timeStep, agent.id, agent.x, agent.y, json.dumps(ConstantVConstantT(agent, self.dt)), agent.speed)))
+                self.dataQueue.put(('predict_traj', (self.timeStep, agent["id"], agent["xQ"][-1], agent["yQ"][-1], json.dumps(ConstantVConstantT(agent, self.dt)), agent["speedQ"][-1])))
 
             # check collision
             for traj in trajs:
@@ -215,7 +215,7 @@ class mDetector(AbstractDetector):
         traffic_rule_cost = self._calc_traffic_rule_cost()
         collision_possibility_cost = self._calc_collision_possibliity_cost()
         
-        print("path_cost: ", path_cost)
+        print("path_cost: ", collision_possibility_cost)
         total_cost = path_cost + traffic_rule_cost + collision_possibility_cost
         self.dataQueue.put(('cost_data', (self.timeStep, path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)))
         
