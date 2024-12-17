@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 # Define the database path
-PATH = "/Users/miakho/Code/LimSim/detector.db"
+PATH = "/Users/miakho/Code/LimSim/database/detector.db"
 
 def combined_attack_cost_plot():
     # Connect to the SQLite database

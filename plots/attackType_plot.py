@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 # Define the database path
-PATH = "/Users/miakho/Code/LimSim/detector.db"
+PATH = "/Users/miakho/Code/LimSim/database/detector.db"
 
 # Attack type are "None", "ATK_BRK", "ATK_FLT"
 def plot_attack_type_data():

@@ -3,7 +3,7 @@ import json
 import plotly.graph_objects as go
 
 # Define the database path
-PATH = "/Users/miakho/Code/LimSim/detector.db"
+PATH = "/Users/miakho/Code/LimSim/database/detector.db"
 
 def plot_predict_traj():
     # Connect to the SQLite database

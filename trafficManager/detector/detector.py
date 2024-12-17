@@ -26,8 +26,10 @@ import os
 import threading
 from queue import Queue
 import json
+import time
 
-PATH = "/Users/miakho/Code/LimSim/detector.db"
+t = time.strftime("%Y%m%d-%H%M%S")
+PATH = f"/Users/miakho/Code/LimSim/detector_{t}.db"
 
 def print_cost(cost: float = 0):
     if cost == 0:

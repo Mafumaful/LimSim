@@ -76,7 +76,7 @@ attack_df = pd.concat(attack_df_list, ignore_index=True)
 cost_df = pd.concat(cost_df_list, ignore_index=True)
 traj_df = pd.concat(traj_df_list, ignore_index=True)
 
-print(f"\nTotal records loaded:")
+print("\nTotal records loaded:")
 print(f"- attack_stats: {attack_df.shape[0]}")
 print(f"- cost_data: {cost_df.shape[0]}")
 print(f"- predict_traj: {traj_df.shape[0]}")
