@@ -23,7 +23,6 @@ from utils.trajectory import Trajectory
 from utils.simBase import MapCoordTF, vehType
 
 from evaluation.evaluation import RealTimeEvaluation
-from trafficManager.detector.detector import mDetector
 
 # get path from environment variable
 path = os.environ.get("LIMSIM_DIR")
@@ -96,7 +95,6 @@ class Model:
         self.gui = GUI('real-time-ego')
 
         self.evaluation = RealTimeEvaluation(dt=0.1)
-        self.detection = mDetector(dt=0.1)
 
     def createDatabase(self):
         # if database exist then delete it
@@ -443,7 +441,6 @@ class Model:
 
         points = self.evaluation.output_result() # get the evaluation result for visualization
         self.putEvaluationInfo(self.evaluation.result) # store it into database
-        self.detection.update_detection_data()
 
         transformed_points = self._evaluation_transform_coordinate(points,
                                                                    scale=30)
@@ -547,7 +544,6 @@ class Model:
             current_lane = self.nb.getJunctionLane(self.ego.laneID)
         agents = list(self.ms.vehINAoI.values())
         self.evaluation.update_data(self.ego, current_lane, agents)
-        self.detection.update_data(self.ego, current_lane, agents, self.roadgraph, self.timeStep)
 
     def getSce(self):
         if self.ego.id in traci.vehicle.getIDList():

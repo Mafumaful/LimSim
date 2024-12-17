@@ -254,12 +254,12 @@ def stop_trajectory_generator_atk(vehicle: Vehicle,
                             - car_length / 2
                             - 2.0,
                         )
+
     # Step 2: 
     path = Trajectory()
     if (current_state.vel <= 1.0 and
         (min_s - current_state.s) <= car_length):  # already stopped, keep it
         logging.debug(f"Vehicle {vehicle.id} Already stopped")
-        path = Trajectory()
         for t in np.arange(0, course_t, dt):
             path.states.append(State(t=t, s=current_state.s, d=current_state.d))
         path.frenet_to_cartesian(lanes, vehicle.current_state)

@@ -11,7 +11,8 @@ from detector.abstract_detector import AbstractDetector
 import numpy as np
 from typing import List
 from evaluation.math_utils import normalize
-from simModel.common.carFactory import Vehicle
+from common.vehicle import Vehicle
+from common.observation import Observation
 from rich import print
 
 from utils.roadgraph import AbstractLane, JunctionLane, NormalLane, RoadGraph
@@ -20,7 +21,8 @@ from utils.obstacles import Rectangle
 # this is used for check collision
 from shapely.geometry import LineString
 
-import sqlite3, os
+import sqlite3
+import os
 import threading
 from queue import Queue
 import json
@@ -64,8 +66,6 @@ def ConstantV(veh: Vehicle, dt: float = 0.1, predict_step: int = 100) -> list:
 
     return traj
 
-import numpy as np
-
 def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 80) -> list:
     """
     Generate a constant velocity trajectory and constant turning rate trajectory.
@@ -85,15 +85,15 @@ def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 80) ->
     traj = []
 
     # Extract the last known state of the vehicle
-    last_v = veh.speedQ[-1]
-    last_yaw = veh.yawQ[-1]
-    last_x = veh.xQ[-1]
-    last_y = veh.yQ[-1]
+    last_v = veh["speedQ"][-1]
+    last_yaw = veh["yawQ"][-1]
+    last_x = veh["xQ"][-1]
+    last_y = veh["yQ"][-1]
     turning_rate = 0  # Default turning rate
 
     # Calculate turning rate if enough yaw data is available
-    if len(veh.yawQ) > 3:
-        yaw_diff = ((veh.yawQ[-1] - veh.yawQ[-2]) + (veh.yawQ[-2] - veh.yawQ[-3])) / 2
+    if len(veh["yawQ"]) > 3:
+        yaw_diff = ((veh["yawQ"][-1] - veh["yawQ"][-2]) + (veh["yawQ"][-2] - veh["yawQ"][-3])) / 2
         turning_rate = yaw_diff / dt
 
     # Add initial position to the trajectory
@@ -122,13 +122,6 @@ def ConstantVConstantT(veh: Vehicle, dt: float = 0.1, predict_step: int = 80) ->
 class mDetector(AbstractDetector):
     def __init__(self, dt: float = 0.1) -> None:
         self.dt: float = dt
-        self.ego: Vehicle = None
-        self.current_lane: AbstractLane = None
-        self.agents: List[Vehicle] = None
-        self.ref_yaw: float = 0.0
-        self.result: np.ndarray = None
-        self.new_yaw: float = 0.0
-        self.T: float = 0.0
         self.timeStep: int = 0
         
         # this is for detecor
@@ -138,14 +131,16 @@ class mDetector(AbstractDetector):
         self.dataQueue = Queue()
         self.create_timer()
         
-    def update_data(self, ego: Vehicle, current_lane: AbstractLane,
-                    agents: List[Vehicle], roadgraph: RoadGraph,
-                    timeStep: int):
-        self.ego = ego
-        self.current_lane = current_lane
-        self.agents = agents
+    def update_data(self, vehicles_info: dict, roadgraph: RoadGraph, timeStep: int, ego_id: int, AttackType: str = None, agents: List[Vehicle] = None):
+        self.vehicles_info = vehicles_info
         self.roadgraph = roadgraph
         self.timeStep = timeStep
+        self.ego_id = ego_id
+        self.attack_type = AttackType
+        
+        self.ego = None
+        if "egoCar" in vehicles_info:
+            self.ego = vehicles_info["egoCar"]
 
     def _calc_path_cost(self) -> float:
         """Calculate the cost of the path
@@ -156,20 +151,14 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
-        velocity_queue = self.ego.speedQ
-        acceleration_queue = self.ego.accelQ
-        
+        # if no history track, return 0
+        acceleration_queue = self.ego["accelQ"]
         brake_threshold = 0.6
         
-        if len(velocity_queue) > 3:
-            # check if the vehicle is braking
-            if velocity_queue[-1] < velocity_queue[-2] and velocity_queue[-2] < velocity_queue[-3]:
-                if acceleration_queue[-1] < -brake_threshold:
-                    return abs(acceleration_queue[-1])
+        if acceleration_queue[-1] < -brake_threshold:
+            return abs(acceleration_queue[-1])
         else:
             return 0.0
-        
-        return 0.0
     
     def _calc_traffic_rule_cost(self) -> float:
         """Calculate the cost of the path based on traffic rules
@@ -180,6 +169,7 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
+        self.current_lane = self.roadgraph.get_lane_by_id(self.ego["laneIDQ"][-1])
         if isinstance(self.current_lane, JunctionLane):
             if self.current_lane.currTlState == 'r':
                 return 2.0
@@ -198,13 +188,15 @@ class mDetector(AbstractDetector):
             float: the cost of the path
         """
         ego_traj = ConstantVConstantT(self.ego, self.dt)
-        self.dataQueue.put(('predict_traj', (self.timeStep, self.ego.id, self.ego.x, self.ego.y, json.dumps(ego_traj), self.ego.speed)))
-        if self.agents:
+        self.dataQueue.put(('predict_traj', (self.timeStep, self.ego["id"], self.ego["xQ"][-1], self.ego["yQ"][-1], json.dumps(ConstantVConstantT(self.ego, self.dt)), self.ego["speedQ"][-1])))
+        
+        agents = []
+        if agents:
             # ego_traj = ConstantV(self.ego, self.dt)
-            # trajs = [ConstantV(agent, self.dt) for agent in self.agents]
-            trajs = [ConstantVConstantT(agent, self.dt) for agent in self.agents]
+            # trajs = [ConstantV(agent, self.dt) for agent in agents]
+            trajs = [ConstantVConstantT(agent, self.dt) for agent in agents]
             
-            for agent in self.agents:
+            for agent in agents:
                 self.dataQueue.put(('predict_traj', (self.timeStep, agent.id, agent.x, agent.y, json.dumps(ConstantVConstantT(agent, self.dt)), agent.speed)))
 
             # check collision
@@ -222,7 +214,8 @@ class mDetector(AbstractDetector):
         path_cost = self._calc_path_cost()
         traffic_rule_cost = self._calc_traffic_rule_cost()
         collision_possibility_cost = self._calc_collision_possibliity_cost()
-
+        
+        print("path_cost: ", path_cost)
         total_cost = path_cost + traffic_rule_cost + collision_possibility_cost
         self.dataQueue.put(('cost_data', (self.timeStep, path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)))
         
@@ -232,7 +225,6 @@ class mDetector(AbstractDetector):
         t.daemon = True
         t.start()
         
-
     def createDatabase(self):
         if os.path.exists(PATH):
             os.remove(PATH)
@@ -253,6 +245,11 @@ class mDetector(AbstractDetector):
                     p_traj TEXT,
                     vel FLOAT,
                     PRIMARY KEY (frame, vehicle_id))''')
+        
+        cur.execute('''CREATE TABLE IF NOT EXISTS attack_stats
+                    (frame INT PRIMARY KEY,
+                    attack_type TEXT,
+                    detected_attack TEXT)''')
         
         conn.commit()
         cur.close()

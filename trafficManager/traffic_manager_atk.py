@@ -133,6 +133,7 @@ class TrafficManager:
         through_timestep = current_time_step - self.time_step
 
         # Perception module
+        # print(vehicles_info)
         vehicles = self.extract_vehicles(vehicles_info, roadgraph, T,
                                          through_timestep, self.sumo_model.sim_mode)
         history_tracks = self.extract_history_tracks(current_time_step,
@@ -220,6 +221,10 @@ class TrafficManager:
 
         logging.info(f"Current frame: {current_time_step}. One loop Time: {time.time() - start}")
         logging.info("------------------------------")
+        
+        # update the detector
+        self.detector.update_data(vehicles_info, roadgraph, current_time_step, ego_id, ATK_INPUT)
+        self.detector.update_detection_data()
 
         return output_trajectories
 
