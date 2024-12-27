@@ -29,7 +29,7 @@ import json
 import time
 
 t = time.strftime("%Y%m%d-%H%M%S")
-PATH = f"/Users/miakho/Code/LimSim/detector_{t}.db"
+PATH = f"/Users/miakho/Code/LimSim/database/detector_{t}.db"
 
 def print_cost(cost: float = 0):
     if cost == 0:

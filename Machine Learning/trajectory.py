@@ -17,7 +17,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # 1. Locate and Aggregate Database Files
-directory_path = "/Users/miakho/Code/LimSim/"
+directory_path = "/Users/miakho/Code/LimSim/database/"
 db_pattern = "detector*.db"
 db_files = glob.glob(f"{directory_path}{db_pattern}")
 
