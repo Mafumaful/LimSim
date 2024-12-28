@@ -193,7 +193,7 @@ class mDetector(AbstractDetector):
             float: the cost of the path
         """
         ego_traj = ConstantVConstantT(self.ego, self.dt)
-        self.dataQueue.put(('predict_traj', (self.timeStep, self.ego["id"], self.ego["xQ"][-1], self.ego["yQ"][-1], json.dumps(ConstantVConstantT(self.ego, self.dt)), self.ego["speedQ"][-1])))
+        self.dataQueue.put(('trajectory', (self.timeStep, self.ego["id"], self.ego["xQ"][-1], self.ego["yQ"][-1], self.ego["speedQ"][-1], self.ego["accelQ"][-1])))
         
         agents = self.vehicles_info["carInAoI"]
         if agents:
@@ -202,7 +202,7 @@ class mDetector(AbstractDetector):
             trajs = [ConstantVConstantT(agent, self.dt) for agent in agents]
             
             for agent in agents:
-                self.dataQueue.put(('predict_traj', (self.timeStep, agent["id"], agent["xQ"][-1], agent["yQ"][-1], json.dumps(ConstantVConstantT(agent, self.dt)), agent["speedQ"][-1])))
+                self.dataQueue.put(('trajectory', (self.timeStep, agent["id"], agent["xQ"][-1], agent["yQ"][-1], agent["speedQ"][-1], agent["accelQ"][-1])))
 
             # check collision
             for traj in trajs:
@@ -220,8 +220,9 @@ class mDetector(AbstractDetector):
         traffic_rule_cost = self._calc_traffic_rule_cost()
         collision_possibility_cost = self._calc_collision_possibliity_cost()
         
+        lane_id = self.current_lane.id
         total_cost = path_cost + traffic_rule_cost + collision_possibility_cost
-        self.dataQueue.put(('cost_data', (self.timeStep, path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)))
+        self.dataQueue.put(('cost_data', (self.timeStep, lane_id, path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)))
         
         
     def create_timer(self):
@@ -236,18 +237,19 @@ class mDetector(AbstractDetector):
         cur = conn.cursor()
         cur.execute('''CREATE TABLE IF NOT EXISTS cost_data
                     (frame INT PRIMARY KEY,
+                    lane_id TEXT,
                     path_cost FLOAT,
                     traffic_rule_cost FLOAT,
                     collision_possibility_cost FLOAT,
                     total_cost FLOAT)''')
         
-        cur.execute('''CREATE TABLE IF NOT EXISTS predict_traj
+        cur.execute('''CREATE TABLE IF NOT EXISTS trajectory
                     (frame INT,
                     vehicle_id TEXT,
                     x FLOAT,
                     y FLOAT,
-                    p_traj TEXT,
                     vel FLOAT,
+                    accel FLOAT,
                     PRIMARY KEY (frame, vehicle_id))''')
         
         cur.execute('''CREATE TABLE IF NOT EXISTS attack_stats
