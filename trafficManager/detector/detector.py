@@ -192,8 +192,25 @@ class mDetector(AbstractDetector):
         Returns:
             float: the cost of the path
         """
+        
+        traffic_light_state = "NA"
+        current_road_type = "NA"
+        traffic_light_time = -1
+        
+        
+        if isinstance(self.current_lane, JunctionLane):
+            current_road_type = "junction"
+            traffic_light_time = self.current_lane.switchTime
+            traffic_light_state = self.current_lane.currTlState
+        elif isinstance(self.current_lane, NormalLane):
+            current_road_type = "normal"
+            next_lane = self.roadgraph.get_next_lane(self.current_lane.id)
+            if next_lane:
+                traffic_light_time = next_lane.switchTime
+                traffic_light_state = next_lane.currTlState
+        
+        self.dataQueue.put(('trajectory', (self.timeStep, self.ego["id"], self.ego["xQ"][-1], self.ego["yQ"][-1], self.ego["speedQ"][-1], self.ego["accelQ"][-1], traffic_light_time, traffic_light_state, current_road_type)))
         ego_traj = ConstantVConstantT(self.ego, self.dt)
-        self.dataQueue.put(('trajectory', (self.timeStep, self.ego["id"], self.ego["xQ"][-1], self.ego["yQ"][-1], self.ego["speedQ"][-1], self.ego["accelQ"][-1])))
         
         agents = self.vehicles_info["carInAoI"]
         if agents:
@@ -202,22 +219,20 @@ class mDetector(AbstractDetector):
             trajs = [ConstantVConstantT(agent, self.dt) for agent in agents]
             
             for agent in agents:
-                self.dataQueue.put(('trajectory', (self.timeStep, agent["id"], agent["xQ"][-1], agent["yQ"][-1], agent["speedQ"][-1], agent["accelQ"][-1])))
+                self.dataQueue.put(('trajectory', (self.timeStep, agent["id"], agent["xQ"][-1], agent["yQ"][-1], agent["speedQ"][-1], agent["accelQ"][-1], -1, "NA", "NA")))
 
             # check collision
             for traj in trajs:
                 if LineString(ego_traj).intersects(LineString(traj)):
                     return 1.0
-                else:
-                    return 0.0
         else: 
             return 0.0
             
         return 0.0
 
     def update_detection_data(self):
-        path_cost = self._calc_path_cost()
         traffic_rule_cost = self._calc_traffic_rule_cost()
+        path_cost = self._calc_path_cost()
         collision_possibility_cost = self._calc_collision_possibliity_cost()
         
         lane_id = self.current_lane.id
@@ -250,6 +265,9 @@ class mDetector(AbstractDetector):
                     y FLOAT,
                     vel FLOAT,
                     accel FLOAT,
+                    traffic_light_time FLOAT,
+                    traffic_light_state TEXT,
+                    road_type TEXT,
                     PRIMARY KEY (frame, vehicle_id))''')
         
         cur.execute('''CREATE TABLE IF NOT EXISTS attack_stats
