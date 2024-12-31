@@ -145,7 +145,7 @@ class mDetector(AbstractDetector):
             self.ego = vehicles_info["egoCar"]
             
         # update attack type
-        self.dataQueue.put(('attack_stats', (self.timeStep, self.attack_type, "None")))
+        self.dataQueue.put(('attack_stats', (self.timeStep, self.attack_type)))
 
     def _calc_path_cost(self) -> float:
         """Calculate the cost of the path
@@ -272,8 +272,7 @@ class mDetector(AbstractDetector):
         
         cur.execute('''CREATE TABLE IF NOT EXISTS attack_stats
                     (frame INT PRIMARY KEY,
-                    attack_type TEXT,
-                    detected_attack TEXT)''')
+                    attack_type TEXT)''')
         
         conn.commit()
         cur.close()
