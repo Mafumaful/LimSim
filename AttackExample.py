@@ -2,12 +2,15 @@ from simModel.egoTracking.model_atk import Model
 from trafficManager.traffic_manager_atk import TrafficManager
 
 import logger
+import logging
 
 import time
 
 t = time.strftime("%Y%m%d-%H%M%S")
 log = logger.setup_app_level_logger(file_name=f"database/app_debug_{t}.log")
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 file_paths = {
     "corridor": (
@@ -57,36 +60,39 @@ def run_model(
     sim_note="example simulation, LimSim-v-0.2.0.",
     carla_cosim=False,
 ):
-    model = Model(
-        ego_veh_id,
-        net_file,
-        rou_file,
-        dataBase=data_base,
-        SUMOGUI=SUMOGUI,
-        simNote=sim_note,
-        carla_cosim=carla_cosim,
-    )
-    model.start()
-    planner = TrafficManager(model)
+    try:
+        model = Model(
+            ego_veh_id,
+            net_file,
+            rou_file,
+            dataBase=data_base,
+            SUMOGUI=SUMOGUI,
+            simNote=sim_note,
+            carla_cosim=carla_cosim,
+        )
+        model.start()
+        planner = TrafficManager(model)
 
-    while not model.tpEnd:
-        model.moveStep()
-        if model.timeStep % 5 == 0:
-            roadgraph, vehicles = model.exportSce()
-            if model.tpStart and roadgraph:
-                trajectories = planner.plan(
-                    model.timeStep * 0.1, roadgraph, vehicles
-                )
-                model.setTrajectories(trajectories)
-            else:
-                model.ego.exitControlMode()
-        model.updateVeh()
+        while not model.tpEnd:
+            model.moveStep()
+            if model.timeStep % 5 == 0:
+                roadgraph, vehicles = model.exportSce()
+                if model.tpStart and roadgraph:
+                    trajectories = planner.plan(
+                        model.timeStep * 0.1, roadgraph, vehicles
+                    )
+                    model.setTrajectories(trajectories)
+                else:
+                    model.ego.exitControlMode()
+            model.updateVeh()
 
-    model.destroy()
-
+        model.destroy()
+    except traci.exceptions.FatalTraCIError as e:
+        logging.error(f"FatalTraCIError: {e}")
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
 
 if __name__ == "__main__":
     net_file, rou_file = file_paths['CarlaTown05']
     # run_model(net_file, rou_file, ego_veh_id="4", carla_cosim=True)
     run_model(net_file, rou_file, ego_veh_id="16", carla_cosim=False)
-   
