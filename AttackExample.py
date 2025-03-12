@@ -3,6 +3,7 @@ from trafficManager.traffic_manager_atk import TrafficManager
 
 import logger
 import logging
+import traci
 
 import time
 
@@ -10,7 +11,7 @@ t = time.strftime("%Y%m%d-%H%M%S")
 log = logger.setup_app_level_logger(file_name=f"database/app_debug_{t}.log")
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 file_paths = {
     "corridor": (
@@ -95,4 +96,4 @@ def run_model(
 if __name__ == "__main__":
     net_file, rou_file = file_paths['CarlaTown05']
     # run_model(net_file, rou_file, ego_veh_id="4", carla_cosim=True)
-    run_model(net_file, rou_file, ego_veh_id="16", carla_cosim=False)
+    run_model(net_file, rou_file, ego_veh_id="1", carla_cosim=False)

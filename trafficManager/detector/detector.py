@@ -212,7 +212,7 @@ class mDetector(AbstractDetector):
                 traffic_light_time = next_lane.switchTime
                 traffic_light_state = next_lane.currTlState
         
-        self.dataQueue.put(('trajectory', (self.timeStep, self.ego["id"], self.ego["xQ"][-1], self.ego["yQ"][-1], self.ego["speedQ"][-1], self.ego["accelQ"][-1], traffic_light_time, traffic_light_state, current_road_type)))
+        self.dataQueue.put(('trajectory', (self.timeStep, self.ego["id"], self.ego["xQ"][-1], self.ego["yQ"][-1], self.ego["speedQ"][-1], self.ego["accelQ"][-1], traffic_light_time, traffic_light_state, current_road_type, self.ego["yawQ"][-1], self.current_lane.id)))
         ego_traj = ConstantVConstantT(self.ego, self.dt)
         
         agents = self.vehicles_info["carInAoI"]
@@ -222,7 +222,7 @@ class mDetector(AbstractDetector):
             trajs = [ConstantVConstantT(agent, self.dt) for agent in agents]
             
             for agent in agents:
-                self.dataQueue.put(('trajectory', (self.timeStep, agent["id"], agent["xQ"][-1], agent["yQ"][-1], agent["speedQ"][-1], agent["accelQ"][-1], -1, "NA", "NA")))
+                self.dataQueue.put(('trajectory', (self.timeStep, agent["id"], agent["xQ"][-1], agent["yQ"][-1], agent["speedQ"][-1], agent["accelQ"][-1], -1, "NA", "NA", agent["yawQ"][-1], "NA")))
 
             # check collision
             for traj in trajs:
@@ -240,7 +240,7 @@ class mDetector(AbstractDetector):
         
         lane_id = self.current_lane.id
         total_cost = path_cost + traffic_rule_cost + collision_possibility_cost
-        self.dataQueue.put(('cost_data', (self.timeStep, lane_id, path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)))
+        self.dataQueue.put(('cost_data', (self.timeStep, path_cost, traffic_rule_cost, collision_possibility_cost, total_cost)))
         
         
     def create_timer(self):
@@ -255,7 +255,6 @@ class mDetector(AbstractDetector):
         cur = conn.cursor()
         cur.execute('''CREATE TABLE IF NOT EXISTS cost_data
                     (frame INT PRIMARY KEY,
-                    lane_id TEXT,
                     path_cost FLOAT,
                     traffic_rule_cost FLOAT,
                     collision_possibility_cost FLOAT,
@@ -271,6 +270,8 @@ class mDetector(AbstractDetector):
                     traffic_light_time FLOAT,
                     traffic_light_state TEXT,
                     road_type TEXT,
+                    yaw FLOAT,
+                    lane_id TEXT,
                     PRIMARY KEY (frame, vehicle_id))''')
         
         cur.execute('''CREATE TABLE IF NOT EXISTS attack_stats
